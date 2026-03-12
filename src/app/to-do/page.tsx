@@ -43,7 +43,15 @@ export default function TodoPage() {
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <header className="px-6 py-4 border-b border-border shrink-0 flex items-center justify-between">
         <h1 className="text-sm font-semibold">Things I Need To Do</h1>
-        <span className="text-xs text-muted-foreground">{remaining} remaining</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">{remaining} remaining</span>
+          <button
+            onClick={() => setModal({ mode: 'create' })}
+            className="text-xs px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            + New task
+          </button>
+        </div>
       </header>
 
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border/50">
