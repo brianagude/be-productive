@@ -36,7 +36,7 @@ export function TodoList({ todos, onStatusClick, onTodoClick }: TodoListProps) {
   if (todos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-muted-foreground text-sm">
-        No tasks yet. Add one below.
+        No tasks yet.
       </div>
     )
   }

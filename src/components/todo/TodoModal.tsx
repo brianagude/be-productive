@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { Todo, Status, Priority, TAG_COLOR_PALETTE } from '@/lib/types'
 import { getGlobalTags, addGlobalTag, getTagColors, setTagColor } from '@/lib/storage'
 import { formatRelativeDeadline } from '@/lib/dates'
@@ -325,6 +326,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
   const [daily, setDaily] = useState(false)
   const [tags, setTags] = useState<string[]>([])
   const [deadline, setDeadline] = useState<string | undefined>()
+  const [descFocused, setDescFocused] = useState(false)
   const titleRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -339,6 +341,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
     } else {
       setTitle(''); setDescription(''); setPriority('none'); setDaily(false); setTags([]); setDeadline(undefined)
     }
+    setDescFocused(false)
     setTimeout(() => titleRef.current?.focus(), 50)
   }, [isOpen, todo?.id])
 
@@ -369,12 +372,13 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
   const handleCreate = () => {
     const trimmed = title.trim()
     if (!trimmed) return
-    onCreate(trimmed, { priority, daily, tags, deadline, status: 'todo' })
+    const desc = description.trim()
+    onCreate(trimmed, { description: desc || undefined, priority, daily, tags, deadline, status: 'todo' })
     onClose()
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={open => { if (!open) { saveTitle(); saveDescription(); onClose() } }}>
       <DialogContent
         showCloseButton={false}
         className="sm:max-w-xl p-0 gap-0 overflow-hidden !top-[22%] !translate-y-0"
@@ -396,16 +400,37 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
           />
         </div>
 
-        <div className="px-5 pb-4">
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            onBlur={saveDescription}
-            placeholder="Add description…"
-            rows={2}
-            className="w-full bg-transparent text-sm text-muted-foreground outline-none resize-none placeholder:text-muted-foreground/40"
-            style={{ fieldSizing: 'content' } as React.CSSProperties}
-          />
+        <div className="px-5 pb-4 min-h-[3rem]">
+          {descFocused || !description ? (
+            <textarea
+              autoFocus={descFocused}
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              onFocus={() => setDescFocused(true)}
+              onBlur={() => { setDescFocused(false); saveDescription() }}
+              placeholder="Add description…"
+              rows={2}
+              className="w-full bg-transparent text-sm text-muted-foreground outline-none resize-none placeholder:text-muted-foreground/40"
+              style={{ fieldSizing: 'content' } as React.CSSProperties}
+            />
+          ) : (
+            <div
+              onClick={() => setDescFocused(true)}
+              className="text-sm text-muted-foreground cursor-text prose prose-sm prose-neutral dark:prose-invert max-w-none [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
+            >
+              <ReactMarkdown
+                components={{
+                  a: ({ href, children }) => (
+                    <a href={href} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {description}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
 
         <div className="px-4 py-2.5 border-t border-border flex items-center gap-1 flex-wrap">
@@ -424,20 +449,25 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
         </div>
 
         <DialogFooter className="px-4 py-3 -mx-0 -mb-0 rounded-b-xl">
-          {isEdit ? (
-            <Button
-              variant="ghost" size="sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10 mr-auto"
-              onClick={() => { onDelete(todo!.id); onClose() }}
-            >
-              Delete
-            </Button>
-          ) : (
-            <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          )}
-          {!isEdit && (
-            <Button size="sm" onClick={handleCreate} disabled={!title.trim()}>Create task</Button>
-          )}
+          {!isEdit && <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>}
+          <div className="flex items-center gap-2 ml-auto">
+            {isEdit ? (
+              <>
+                <Button
+                  variant="ghost" size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => { onDelete(todo!.id); onClose() }}
+                >
+                  Delete
+                </Button>
+                <Button size="sm" onClick={() => { saveTitle(); saveDescription(); onClose() }} disabled={!title.trim()}>
+                  Save
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" onClick={handleCreate} disabled={!title.trim()}>Create task</Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
