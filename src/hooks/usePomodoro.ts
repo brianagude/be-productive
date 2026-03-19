@@ -82,6 +82,10 @@ export function usePomodoro(): UsePomodoroReturn {
 
   const audioCtxRef = useRef<AudioContext | null>(null)
 
+  // Wall-clock refs for tab-throttling resistance
+  const endTimeRef = useRef<number>(0)
+  const remainingSecondsRef = useRef<number>(0)
+
   // handlePhaseComplete stored in ref so interval never captures stale closure
   const handlePhaseCompleteRef = useRef<() => void>(() => {})
 
@@ -95,6 +99,7 @@ export function usePomodoro(): UsePomodoroReturn {
       if (ctx) playWorkDone(ctx)
       sendNotification('Work session complete!', 'Time for a break.')
       const breakSecs = settingsRef.current.breakMins * 60
+      endTimeRef.current = Date.now() + breakSecs * 1000
       setTotalSeconds(breakSecs)
       setSecondsLeft(breakSecs)
       setPhase('break')
@@ -111,16 +116,13 @@ export function usePomodoro(): UsePomodoroReturn {
     if (phase !== 'work' && phase !== 'break') return
 
     const id = setInterval(() => {
-      setSecondsLeft(s => {
-        if (s <= 1) {
-          clearInterval(id)
-          // Use timeout to avoid setState-inside-setState issues
-          setTimeout(() => handlePhaseCompleteRef.current(), 0)
-          return 0
-        }
-        return s - 1
-      })
-    }, 1000)
+      const secs = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000))
+      setSecondsLeft(secs)
+      if (secs <= 0) {
+        clearInterval(id)
+        setTimeout(() => handlePhaseCompleteRef.current(), 0)
+      }
+    }, 500)
 
     return () => clearInterval(id)
   }, [phase])
@@ -139,31 +141,34 @@ export function usePomodoro(): UsePomodoroReturn {
     }
 
     const secs = settingsRef.current.workMins * 60
+    endTimeRef.current = Date.now() + secs * 1000
     setTotalSeconds(secs)
     setSecondsLeft(secs)
     setPhase('work')
   }, [])
 
   const pause = useCallback(() => {
+    remainingSecondsRef.current = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000))
     setPhase('paused')
   }, [])
 
   const resume = useCallback(() => {
+    endTimeRef.current = Date.now() + remainingSecondsRef.current * 1000
     setPhase('work')
   }, [])
 
   const stop = useCallback(() => {
     const todoId = selectedTodoIdRef.current
-    const current = secondsLeft  // captured at call time
+    const remaining = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000))
     const total = totalSecondsRef.current
-    const elapsed = total - current
-    if (todoId && phaseRef.current === 'work' && elapsed > 0) {
+    const elapsed = total - (phaseRef.current === 'paused' ? remainingSecondsRef.current : remaining)
+    if (todoId && (phaseRef.current === 'work' || phaseRef.current === 'paused') && elapsed > 0) {
       addTimeSpent(todoId, elapsed)
     }
     setPhase('idle')
     setSecondsLeft(0)
     setTotalSeconds(0)
-  }, [secondsLeft])
+  }, [])
 
   const skipBreak = useCallback(() => {
     setPhase('idle')

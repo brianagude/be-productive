@@ -17,6 +17,14 @@ export const TAG_COLOR_PALETTE = [
   { name: 'pink',   hex: '#f472b6' },
 ] as const
 
+export interface CompletionRecord {
+  todoId: string
+  title: string
+  tags: string[]
+  date: string        // "YYYY-MM-DD"
+  completedAt: string // ISO timestamp
+}
+
 export interface Todo {
   id: string
   title: string

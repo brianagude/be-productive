@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import { Todo, Status, Priority, TAG_COLOR_PALETTE } from '@/lib/types'
 import { getGlobalTags, addGlobalTag, getTagColors, setTagColor } from '@/lib/storage'
 import { formatRelativeDeadline } from '@/lib/dates'
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { HelpCircle } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { StatusButton } from './StatusButton'
 import { cn } from '@/lib/utils'
@@ -416,15 +419,20 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
           ) : (
             <div
               onClick={() => setDescFocused(true)}
-              className="text-sm text-muted-foreground cursor-text prose prose-sm prose-neutral dark:prose-invert max-w-none [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
+              className="text-sm text-muted-foreground cursor-text prose prose-sm prose-neutral dark:prose-invert max-w-none [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:my-0.5 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground/60 [&_blockquote]:not-italic"
             >
               <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkBreaks]}
                 components={{
                   a: ({ href, children }) => (
                     <a href={href} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
                       {children}
                     </a>
                   ),
+                  input: ({ type, checked }) =>
+                    type === 'checkbox' ? (
+                      <input type="checkbox" checked={checked} readOnly className="mr-1.5 accent-foreground" />
+                    ) : null,
                 }}
               >
                 {description}
@@ -446,6 +454,22 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
             onDeleteTag={onDeleteTag}
           />
           <DeadlinePicker value={deadline} onChange={d => handleField('deadline', d)} />
+
+          <div className="ml-auto">
+            <Popover>
+              <PopoverTrigger className="flex items-center text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1">
+                <HelpCircle className="w-3.5 h-3.5" />
+              </PopoverTrigger>
+              <PopoverContent side="top" align="end" className="w-56 p-3 text-xs space-y-1.5">
+                <p className="font-medium text-foreground mb-2">Markdown reference</p>
+                <p className="text-muted-foreground font-mono">**bold** &nbsp; *italic* &nbsp; `code`</p>
+                <p className="text-muted-foreground font-mono">- item &nbsp; 1. item</p>
+                <p className="text-muted-foreground font-mono">- [ ] todo &nbsp; - [x] done</p>
+                <p className="text-muted-foreground font-mono">[text](url)</p>
+                <p className="text-muted-foreground font-mono">&gt; blockquote</p>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         <DialogFooter className="px-4 py-3 -mx-0 -mb-0 rounded-b-xl">

@@ -1,9 +1,10 @@
-import { Todo, Status } from './types'
+import { Todo, Status, CompletionRecord } from './types'
 
 const STORAGE_KEY      = 'tiny-tools:todos'
 const TAGS_KEY         = 'tiny-tools:tags'
 const TAG_COLORS_KEY   = 'tiny-tools:tagColors'
 const RESET_KEY        = 'tiny-tools:lastReset'
+const COMPLETIONS_KEY  = 'tiny-tools:completions'
 
 // ── Global tags ────────────────────────────────────────────────────────────────
 
@@ -75,6 +76,27 @@ export function getTodos(): Todo[] {
 export function saveTodos(todos: Todo[]): void {
   if (typeof window === 'undefined') return
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
+}
+
+// ── Completions ────────────────────────────────────────────────────────────────
+
+export function getCompletions(): CompletionRecord[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(COMPLETIONS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+export function addCompletion(record: CompletionRecord): void {
+  if (typeof window === 'undefined') return
+  const records = getCompletions()
+  localStorage.setItem(COMPLETIONS_KEY, JSON.stringify([...records, record]))
+}
+
+export function clearCompletions(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(COMPLETIONS_KEY)
 }
 
 // ── Startup cleanup ────────────────────────────────────────────────────────────

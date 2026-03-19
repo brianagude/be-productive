@@ -8,6 +8,7 @@ import { usePomodoro } from '@/hooks/usePomodoro'
 import { TodoList } from '@/components/todo/TodoList'
 import { TodoModal, ModalState } from '@/components/todo/TodoModal'
 import { PomodoroWidget } from '@/components/todo/PomodoroWidget'
+import { PomodoroModal } from '@/components/todo/PomodoroModal'
 
 export default function TodoPage() {
   const { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag } = useTodos()
@@ -83,6 +84,8 @@ export default function TodoPage() {
         pomodoro={pomodoro}
         todos={todos.filter(t => t.status !== 'done' && t.status !== 'cancelled')}
       />
+
+      <PomodoroModal pomodoro={pomodoro} />
 
       <TodoModal
         state={modal}

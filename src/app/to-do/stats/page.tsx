@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getTodos } from '@/lib/storage'
-import { getTagColors } from '@/lib/storage'
+import { getTodos, getTagColors, getCompletions } from '@/lib/storage'
 import { getAllSessions, Session } from '@/lib/pomodoroStorage'
-import { Todo } from '@/lib/types'
+import { Todo, CompletionRecord } from '@/lib/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -103,9 +102,16 @@ interface DashboardData {
   bestDayDate: string
   streak: number
   hasAnyData: boolean
+  // Completions
+  todayCompletions: CompletionRecord[]
+  weekCompletions: CompletionRecord[]
+  completionsByDay: Record<string, number>
+  completionsByTag: Array<{ tag: string; count: number; color: string }>
+  completionStreak: number
+  totalCompleted: number
 }
 
-function compute(todos: Todo[], tagColors: Record<string, string>, sessions: Session[]): DashboardData {
+function compute(todos: Todo[], tagColors: Record<string, string>, sessions: Session[], completions: CompletionRecord[]): DashboardData {
   const todoMap = new Map<string, Todo>(todos.map(t => [t.id, t]))
   const today = dateStr(0)
   const wStart = weekStart()
@@ -158,6 +164,31 @@ function compute(todos: Todo[], tagColors: Record<string, string>, sessions: Ses
   const bestEntry = Object.entries(byDay).sort((a, b) => b[1] - a[1])[0]
   const streak = calcStreak(byDay)
 
+  // ── Completions
+  const todayCompletions = completions.filter(c => c.date === today)
+  const weekCompletions = completions.filter(c => c.date >= wStart)
+  const completionsByDay: Record<string, number> = {}
+  for (const c of completions) {
+    completionsByDay[c.date] = (completionsByDay[c.date] ?? 0) + 1
+  }
+  const completionStreak = calcStreak(completionsByDay)
+  const weekTagMap2: Record<string, number> = {}
+  for (const c of weekCompletions) {
+    if (c.tags.length === 0) {
+      weekTagMap2['untagged'] = (weekTagMap2['untagged'] ?? 0) + 1
+    } else {
+      for (const tag of c.tags) {
+        weekTagMap2[tag] = (weekTagMap2[tag] ?? 0) + 1
+      }
+    }
+  }
+  const completionsByTag = Object.entries(weekTagMap2)
+    .sort((a, b) => b[1] - a[1])
+    .map(([tag, count], i) => ({
+      tag, count,
+      color: tag === 'untagged' ? '#94a3b8' : (tagColors[tag] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]),
+    }))
+
   return {
     todayTotal, todayTasks,
     weekTotal, weekTags,
@@ -167,6 +198,12 @@ function compute(todos: Todo[], tagColors: Record<string, string>, sessions: Ses
     bestDayDate: bestEntry?.[0] ?? '',
     streak,
     hasAnyData: sessions.length > 0,
+    todayCompletions,
+    weekCompletions,
+    completionsByDay,
+    completionsByTag,
+    completionStreak,
+    totalCompleted: completions.length,
   }
 }
 
@@ -191,7 +228,8 @@ export default function StatsPage() {
     const sessions = getAllSessions()
     const todos = getTodos()
     const tagColors = getTagColors()
-    setData(compute(todos, tagColors, sessions))
+    const completions = getCompletions()
+    setData(compute(todos, tagColors, sessions, completions))
   }, [])
 
   useEffect(() => {
@@ -224,8 +262,72 @@ export default function StatsPage() {
           </div>
         ) : (
           <div className="pb-10">
+            {/* ── Tasks completed ───────────────────────────────────────────── */}
+            {data.totalCompleted > 0 && (
+              <>
+                <SectionHeader label="Tasks completed" />
+                <div className="grid grid-cols-4 gap-px bg-border mx-4 rounded-lg overflow-hidden">
+                  <div className="bg-background px-4 py-4">
+                    <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1.5">All time</p>
+                    <p className="text-xl font-semibold tabular-nums">{data.totalCompleted}</p>
+                  </div>
+                  <div className="bg-background px-4 py-4">
+                    <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1.5">Today</p>
+                    <p className="text-xl font-semibold tabular-nums">{data.todayCompletions.length}</p>
+                  </div>
+                  <div className="bg-background px-4 py-4">
+                    <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1.5">This week</p>
+                    <p className="text-xl font-semibold tabular-nums">{data.weekCompletions.length}</p>
+                  </div>
+                  <div className="bg-background px-4 py-4">
+                    <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1.5">Streak</p>
+                    <p className="text-xl font-semibold tabular-nums">{data.completionStreak}</p>
+                    <p className="text-[10px] text-muted-foreground/40 mt-0.5">{data.completionStreak === 1 ? 'day' : 'days'}</p>
+                  </div>
+                </div>
+
+                {data.completionsByTag.length > 0 && (
+                  <>
+                    <SectionHeader label="This week by category" right={`${data.weekCompletions.length} tasks`} />
+                    <div className="px-4 flex flex-col gap-2">
+                      {data.completionsByTag.map(({ tag, count, color }) => (
+                        <div key={tag} className="flex items-center gap-3">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                          <span className="text-sm text-muted-foreground flex-1">{tag}</span>
+                          <div className="flex-1 h-[3px] rounded-full bg-border overflow-hidden max-w-24">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${(count / Math.max(...data.completionsByTag.map(t => t.count))) * 100}%`,
+                                backgroundColor: color,
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium tabular-nums w-6 text-right">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {data.todayCompletions.length > 0 && (
+                  <>
+                    <SectionHeader label="Completed today" />
+                    {data.todayCompletions.map((c, i) => (
+                      <div key={i} className="flex items-center px-4 py-2 border-b border-border/20 last:border-0">
+                        <span className="flex-1 text-sm truncate">{c.title}</span>
+                        {c.tags.length > 0 && (
+                          <span className="text-xs text-muted-foreground/50 ml-2">{c.tags.join(', ')}</span>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+
             {/* ── All time ──────────────────────────────────────────────────── */}
-            <SectionHeader label="All time" />
+            <SectionHeader label="Time — all time" />
             <div className="grid grid-cols-3 gap-px bg-border mx-4 rounded-lg overflow-hidden">
               <div className="bg-background px-4 py-4">
                 <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1.5">Total</p>
@@ -246,7 +348,7 @@ export default function StatsPage() {
             </div>
 
             {/* ── Today ─────────────────────────────────────────────────────── */}
-            <SectionHeader label="Today" right={data.todayTotal > 0 ? fmt(data.todayTotal) : undefined} />
+            <SectionHeader label="Time — today" right={data.todayTotal > 0 ? fmt(data.todayTotal) : undefined} />
             {data.todayTasks.length === 0 ? (
               <p className="px-4 text-xs text-muted-foreground/40 pb-2">No sessions logged today.</p>
             ) : (
@@ -261,7 +363,7 @@ export default function StatsPage() {
             {/* ── This week ─────────────────────────────────────────────────── */}
             {data.weekTotal > 0 && (
               <>
-                <SectionHeader label="This week" right={fmt(data.weekTotal)} />
+                <SectionHeader label="Time — this week" right={fmt(data.weekTotal)} />
                 <div className="flex items-start gap-6 px-4">
                   <DonutChart slices={data.weekTags.map(t => ({ label: t.tag, seconds: t.seconds, color: t.color }))} />
                   <div className="flex flex-col gap-2.5 pt-1">

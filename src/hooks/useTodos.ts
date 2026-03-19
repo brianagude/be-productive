@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Todo, Status, Priority } from '@/lib/types'
-import { getTodos, saveTodos, runStartupCleanup, renameGlobalTag, deleteGlobalTag } from '@/lib/storage'
+import { getTodos, saveTodos, runStartupCleanup, renameGlobalTag, deleteGlobalTag, addCompletion } from '@/lib/storage'
 import { pruneTimeSpent } from '@/lib/pomodoroStorage'
 
 export function useTodos() {
@@ -59,6 +59,13 @@ export function useTodos() {
   const cycleStatus = useCallback((id: string, current: Status) => {
     const cycle: Status[] = ['todo', 'in-progress', 'done', 'cancelled']
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length]
+    if (next === 'done') {
+      const todo = getTodos().find(t => t.id === id)
+      if (todo) {
+        const now = new Date().toISOString()
+        addCompletion({ todoId: id, title: todo.title, tags: todo.tags, date: now.slice(0, 10), completedAt: now })
+      }
+    }
     updateTodo(id, { status: next })
   }, [updateTodo])
 
