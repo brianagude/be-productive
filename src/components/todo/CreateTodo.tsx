@@ -2,6 +2,7 @@
 
 import { useState, useRef, KeyboardEvent } from 'react'
 import { Input } from '@/components/ui/input'
+import posthog from 'posthog-js'
 
 interface CreateTodoProps {
   onAdd: (title: string) => void
@@ -16,6 +17,7 @@ export function CreateTodo({ onAdd }: CreateTodoProps) {
     if (!trimmed) return
     onAdd(trimmed)
     setValue('')
+    posthog.capture('task_created')
     inputRef.current?.focus()
   }
 

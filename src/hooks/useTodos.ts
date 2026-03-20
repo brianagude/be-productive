@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Todo, Status, Priority } from '@/lib/types'
 import { getTodos, saveTodos, runStartupCleanup, renameGlobalTag, deleteGlobalTag, addCompletion } from '@/lib/storage'
 import { pruneTimeSpent } from '@/lib/pomodoroStorage'
+import posthog from 'posthog-js'
 
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([])
@@ -53,6 +54,7 @@ export function useTodos() {
   }, [persist])
 
   const deleteTodo = useCallback((id: string) => {
+    posthog.capture('task_deleted')
     persist(getTodos().filter(t => t.id !== id))
   }, [persist])
 
@@ -64,6 +66,7 @@ export function useTodos() {
       if (todo) {
         const now = new Date().toISOString()
         addCompletion({ todoId: id, title: todo.title, tags: todo.tags, date: now.slice(0, 10), completedAt: now })
+        posthog.capture('task_completed')
       }
     }
     updateTodo(id, { status: next })
