@@ -12,7 +12,7 @@ const splineMono = Spline_Sans_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = "https://tools.brianagude.com"
+const siteUrl = "https://be-productive.brianagude.com"
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     default: "Be Productive",
     template: "%s · Be Productive",
   },
-  description: "A growing collection of small, useful tools.",
-  keywords: ["tools", "productivity", "to-do", "tasks"],
+  description: "A simple task management app to help you track and improve your productivity.",
+  keywords: ["productivity", "task management", "to-do", "tasks", "pomodoro"],
   authors: [{ name: "Briana Gude", url: "https://www.brianagude.com" }],
   creator: "Briana Gude",
   openGraph: {
@@ -29,13 +29,13 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: "Be Productive",
     title: "Be Productive",
-    description: "A growing collection of small, useful tools.",
+    description: "A simple task management app to help you track and improve your productivity.",
     images: [{ url: "/web-app-manifest-512x512.png", width: 512, height: 512, alt: "Be Productive" }],
   },
   twitter: {
     card: "summary",
     title: "Be Productive",
-    description: "A growing collection of small, useful tools.",
+    description: "A simple task management app to help you track and improve your productivity.",
     images: ["/web-app-manifest-512x512.png"],
   },
   manifest: "/manifest.webmanifest",
