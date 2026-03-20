@@ -364,7 +364,7 @@ export default function StatsPage() {
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <header className="px-6 py-4 border-b border-border shrink-0 flex items-center justify-between">
         <h1 className="text-sm font-semibold">Stats</h1>
-        <Link href="/to-do" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
           Back to tasks
         </Link>
       </header>
