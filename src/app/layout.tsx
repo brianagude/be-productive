@@ -30,15 +30,14 @@ export const metadata: Metadata = {
     siteName: "Be Productive",
     title: "Be Productive",
     description: "A simple task management app to help you track and improve your productivity.",
-    images: [{ url: "/web-app-manifest-512x512.png", width: 512, height: 512, alt: "Be Productive" }],
+    images: [],
   },
   twitter: {
     card: "summary",
     title: "Be Productive",
     description: "A simple task management app to help you track and improve your productivity.",
-    images: ["/web-app-manifest-512x512.png"],
+    images: [],
   },
-  manifest: "/manifest.webmanifest",
   robots: {
     index: true,
     follow: true,
