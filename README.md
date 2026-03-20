@@ -1,12 +1,12 @@
-# Tiny Tools
+# Be Productive
 
 A growing collection of small, useful tools built by [Briana Gude](https://www.brianagude.com).
 
 ## Tools
 
-| Tool | Route | Description |
-|---|---|---|
-| To-Do | `/to-do` | Task manager with priorities, tags, deadlines, and daily habits |
+| Tool  | Route | Description                                                     |
+| ----- | ----- | --------------------------------------------------------------- |
+| To-Do | `/`   | Task manager with priorities, tags, deadlines, and daily habits |
 
 ## Tech Stack
 

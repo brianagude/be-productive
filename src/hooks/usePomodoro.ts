@@ -172,15 +172,15 @@ export function usePomodoro(): UsePomodoroReturn {
   useEffect(() => {
     if (typeof document === 'undefined') return
     if (phase === 'idle' || phase === 'prompt') {
-      document.title = 'Tiny Tools'
-      return () => { document.title = 'Tiny Tools' }
+      document.title = 'Be Productive'
+      return () => { document.title = 'Be Productive' }
     }
     const m = Math.floor(secondsLeft / 60)
     const s = secondsLeft % 60
     const timeStr = `${m}:${s.toString().padStart(2, '0')}`
     const label = phase === 'work' ? 'Work' : phase === 'break' ? 'Break' : 'Paused'
-    document.title = `${timeStr} · ${label} · Tiny Tools`
-    return () => { document.title = 'Tiny Tools' }
+    document.title = `${timeStr} · ${label} · Be Productive`
+    return () => { document.title = 'Be Productive' }
   }, [phase, secondsLeft])
 
   const start = useCallback(() => {

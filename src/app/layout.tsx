@@ -17,8 +17,8 @@ const siteUrl = "https://tools.brianagude.com"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Tiny Tools",
-    template: "%s · Tiny Tools",
+    default: "Be Productive",
+    template: "%s · Be Productive",
   },
   description: "A growing collection of small, useful tools.",
   keywords: ["tools", "productivity", "to-do", "tasks"],
@@ -27,14 +27,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: siteUrl,
-    siteName: "Tiny Tools",
-    title: "Tiny Tools",
+    siteName: "Be Productive",
+    title: "Be Productive",
     description: "A growing collection of small, useful tools.",
-    images: [{ url: "/web-app-manifest-512x512.png", width: 512, height: 512, alt: "Tiny Tools" }],
+    images: [{ url: "/web-app-manifest-512x512.png", width: 512, height: 512, alt: "Be Productive" }],
   },
   twitter: {
     card: "summary",
-    title: "Tiny Tools",
+    title: "Be Productive",
     description: "A growing collection of small, useful tools.",
     images: ["/web-app-manifest-512x512.png"],
   },

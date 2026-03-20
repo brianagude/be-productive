@@ -11,7 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${siteUrl}/to-do`,
+      url: `${siteUrl}/stats`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
