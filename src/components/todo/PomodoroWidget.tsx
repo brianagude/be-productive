@@ -34,7 +34,7 @@ export function PomodoroWidget({ pomodoro, todos }: Props) {
     getTimeSpentForTodo,
   } = pomodoro
 
-  const activeTodos = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled')
+  const activeTodos = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled').sort((a, b) => a.title.localeCompare(b.title))
   const persistedTime = selectedTodoId ? getTimeSpentForTodo(selectedTodoId) : 0
   const sessionSeconds = (phase === 'work' || phase === 'paused') ? (totalSeconds - secondsLeft) : 0
   const liveTimeSpent = persistedTime + sessionSeconds

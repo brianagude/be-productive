@@ -17,8 +17,17 @@ export default function TodoPage() {
 
   const handleTodoClick = (todo: Todo) => setModal({ mode: 'edit', todo })
 
+  const handleCycleStatus = (id: string, status: Todo['status']) => {
+    cycleStatus(id, status)
+    if (modal.mode === 'edit' && modal.todo.id === id) {
+      const cycle = ['todo', 'in-progress', 'done', 'cancelled'] as const
+      const next = cycle[(cycle.indexOf(status) + 1) % cycle.length]
+      setModal({ mode: 'edit', todo: { ...modal.todo, status: next } })
+    }
+  }
+
   const handleCreate = (title: string, fields: Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>>) => {
-    addTodo(title, fields.priority as Priority | undefined, fields.daily ?? false, fields.tags ?? [], fields.deadline, fields.description)
+    addTodo(title, fields.priority as Priority | undefined, fields.daily ?? false, fields.weeklyDays ?? [], fields.tags ?? [], fields.deadline, fields.description)
   }
 
   const handleUpdate = (id: string, changes: Partial<Todo>) => {
@@ -75,7 +84,7 @@ export default function TodoPage() {
       <div className="flex-1 overflow-y-auto">
         <TodoList
           todos={todos}
-          onStatusClick={todo => cycleStatus(todo.id, todo.status)}
+          onStatusClick={todo => handleCycleStatus(todo.id, todo.status)}
           onTodoClick={handleTodoClick}
         />
       </div>
@@ -93,7 +102,7 @@ export default function TodoPage() {
         onCreate={handleCreate}
         onUpdate={handleUpdate}
         onDelete={deleteTodo}
-        onCycleStatus={cycleStatus}
+        onCycleStatus={handleCycleStatus}
         onRenameTag={handleRenameTag}
         onDeleteTag={handleDeleteTag}
       />

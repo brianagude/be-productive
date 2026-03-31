@@ -80,6 +80,60 @@ function DailyToggle({ value, onChange }: { value: boolean; onChange: (v: boolea
   )
 }
 
+// ── Weekly picker ──────────────────────────────────────────────────────────────
+
+const DAYS = [
+  { label: 'Sun', value: 0 },
+  { label: 'Mon', value: 1 },
+  { label: 'Tue', value: 2 },
+  { label: 'Wed', value: 3 },
+  { label: 'Thu', value: 4 },
+  { label: 'Fri', value: 5 },
+  { label: 'Sat', value: 6 },
+]
+
+function WeeklyPicker({ value, onChange }: { value: number[]; onChange: (v: number[]) => void }) {
+  const hasAny = value.length > 0
+  const label = hasAny
+    ? value.length === 1
+      ? DAYS.find(d => d.value === value[0])?.label ?? 'Weekly'
+      : `${value.length}d / wk`
+    : 'Weekly'
+
+  const toggle = (day: number) => {
+    onChange(value.includes(day) ? value.filter(d => d !== day) : [...value, day])
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger className={cn(
+        'flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors cursor-pointer',
+        hasAny ? 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-400 font-medium' : 'text-muted-foreground hover:bg-accent'
+      )}>
+        <span>↻</span>{label}
+      </PopoverTrigger>
+      <PopoverContent side="top" align="start" className="w-auto p-2">
+        <div className="flex gap-1">
+          {DAYS.map(d => (
+            <button
+              key={d.value}
+              onClick={() => toggle(d.value)}
+              className={cn(
+                'w-9 h-8 rounded text-xs font-medium transition-colors',
+                value.includes(d.value)
+                  ? 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-400'
+                  : 'text-muted-foreground hover:bg-accent'
+              )}
+            >
+              {d.label}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 // ── Tag picker ─────────────────────────────────────────────────────────────────
 
 function TagPicker({
@@ -327,6 +381,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<Priority>('none')
   const [daily, setDaily] = useState(false)
+  const [weeklyDays, setWeeklyDays] = useState<number[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [deadline, setDeadline] = useState<string | undefined>()
   const [descFocused, setDescFocused] = useState(false)
@@ -339,10 +394,11 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
       setDescription(todo.description ?? '')
       setPriority(todo.priority)
       setDaily(todo.daily)
+      setWeeklyDays(todo.weeklyDays ?? [])
       setTags(todo.tags)
       setDeadline(todo.deadline)
     } else {
-      setTitle(''); setDescription(''); setPriority('none'); setDaily(false); setTags([]); setDeadline(undefined)
+      setTitle(''); setDescription(''); setPriority('none'); setDaily(false); setWeeklyDays([]); setTags([]); setDeadline(undefined)
     }
     setDescFocused(false)
     setTimeout(() => titleRef.current?.focus(), 50)
@@ -355,7 +411,14 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
 
   const handleField = <K extends keyof Todo>(key: K, value: Todo[K]) => {
     if (key === 'priority') setPriority(value as Priority)
-    if (key === 'daily') setDaily(value as boolean)
+    if (key === 'daily') {
+      setDaily(value as boolean)
+      if (value) { setWeeklyDays([]); if (isEdit && todo) onUpdate(todo.id, { weeklyDays: [] }) }
+    }
+    if (key === 'weeklyDays') {
+      setWeeklyDays(value as number[])
+      if ((value as number[]).length > 0) { setDaily(false); if (isEdit && todo) onUpdate(todo.id, { daily: false }) }
+    }
     if (key === 'tags') setTags(value as string[])
     if (key === 'deadline') setDeadline(value as string | undefined)
     if (isEdit && todo) onUpdate(todo.id, { [key]: value })
@@ -376,7 +439,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
     const trimmed = title.trim()
     if (!trimmed) return
     const desc = description.trim()
-    onCreate(trimmed, { description: desc || undefined, priority, daily, tags, deadline, status: 'todo' })
+    onCreate(trimmed, { description: desc || undefined, priority, daily, weeklyDays, tags, deadline, status: 'todo' })
     onClose()
   }
 
@@ -447,6 +510,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
           )}
           <PriorityPicker value={priority} onChange={p => handleField('priority', p)} />
           <DailyToggle value={daily} onChange={v => handleField('daily', v)} />
+          <WeeklyPicker value={weeklyDays} onChange={v => handleField('weeklyDays', v)} />
           <TagPicker
             selected={tags}
             onChange={t => handleField('tags', t)}

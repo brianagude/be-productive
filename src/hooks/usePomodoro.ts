@@ -158,17 +158,23 @@ export function usePomodoro(): UsePomodoroReturn {
     return () => clearInterval(id)
   }, [phase])
 
-  // Ambient chime every 30 seconds during break
+  // Ambient chime once at the 1-minute warning during break
+  const chimePlayedRef = useRef(false)
+  useEffect(() => {
+    if (phase === 'break') {
+      chimePlayedRef.current = false
+    }
+  }, [phase])
+
   useEffect(() => {
     if (phase !== 'break') return
-
-    const id = setInterval(() => {
+    if (chimePlayedRef.current) return
+    if (secondsLeft <= 60 && secondsLeft > 0) {
+      chimePlayedRef.current = true
       const ctx = audioCtxRef.current
       if (ctx) playAmbientChime(ctx)
-    }, 30000)
-
-    return () => clearInterval(id)
-  }, [phase])
+    }
+  }, [phase, secondsLeft])
 
   // Page title shows timer countdown while active
   useEffect(() => {

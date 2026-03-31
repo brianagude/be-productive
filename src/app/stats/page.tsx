@@ -404,14 +404,14 @@ export default function StatsPage() {
                     <div key={tag} className="flex items-center gap-3">
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                       <span className="text-sm text-muted-foreground flex-1">{tag}</span>
+                      <span className="text-sm font-medium tabular-nums">{fmt(seconds)}</span>
                       <div className="flex-1 h-[3px] rounded-full bg-border overflow-hidden max-w-24">
                         <div className="h-full rounded-full"
                           style={{
-                            width: `${(seconds / Math.max(...data.todayTags.map(t => t.seconds))) * 100}%`,
+                            width: `${(seconds / data.todayTotal) * 100}%`,
                             backgroundColor: color,
                           }} />
                       </div>
-                      <span className="text-sm font-medium tabular-nums">{fmt(seconds)}</span>
                     </div>
                   ))}
                 </div>
@@ -427,14 +427,14 @@ export default function StatsPage() {
                     <div key={tag} className="flex items-center gap-3">
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                       <span className="text-sm text-muted-foreground flex-1">{tag}</span>
+                      <span className="text-sm font-medium tabular-nums">{fmt(seconds)}</span>
                       <div className="flex-1 h-[3px] rounded-full bg-border overflow-hidden max-w-24">
                         <div className="h-full rounded-full"
                           style={{
-                            width: `${(seconds / Math.max(...data.weekTags.map(t => t.seconds))) * 100}%`,
+                            width: `${(seconds / data.weekTotal) * 100}%`,
                             backgroundColor: color,
                           }} />
                       </div>
-                      <span className="text-sm font-medium tabular-nums">{fmt(seconds)}</span>
                     </div>
                   ))}
                 </div>

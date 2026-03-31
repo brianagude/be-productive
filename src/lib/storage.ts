@@ -69,7 +69,7 @@ export function getTodos(): Todo[] {
     const raw = localStorage.getItem(STORAGE_KEY)
     const todos = raw ? JSON.parse(raw) : []
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return todos.map((t: any) => ({ tags: [], daily: false, ...t } as Todo))
+    return todos.map((t: any) => ({ tags: [], daily: false, weeklyDays: [], ...t } as Todo))
   } catch { return [] }
 }
 
@@ -132,11 +132,18 @@ export function runStartupCleanup(todos: Todo[]): { todos: Todo[]; changed: bool
     return true
   })
 
-  // 3. Reset daily todos if it's a new day
+  // 3. Reset daily/weekly todos if it's a new day
+  const todayDow = now.getDay() // 0=Sun…6=Sat
   const lastReset = localStorage.getItem(RESET_KEY)
   if (lastReset !== today) {
     result = result.map(t => {
-      if (t.daily && (t.status === 'done' || t.status === 'cancelled')) {
+      const isComplete = t.status === 'done' || t.status === 'cancelled'
+      if (!isComplete) return t
+      if (t.daily) {
+        changed = true
+        return { ...t, status: 'todo' as Status, updatedAt: now.toISOString() }
+      }
+      if (t.weeklyDays?.includes(todayDow)) {
         changed = true
         return { ...t, status: 'todo' as Status, updatedAt: now.toISOString() }
       }

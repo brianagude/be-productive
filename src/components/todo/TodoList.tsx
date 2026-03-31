@@ -1,27 +1,30 @@
 'use client'
 
-import { Todo, Priority, Status } from '@/lib/types'
+import { Todo } from '@/lib/types'
 import { TodoItem } from './TodoItem'
-
-const priorityOrder: Record<Priority, number> = {
-  urgent: 0, high: 1, medium: 2, low: 3, none: 4,
-}
-
-const statusOrder: Record<Status, number> = {
-  'in-progress': 0, 'todo': 1, 'done': 2, 'cancelled': 3,
-}
 
 function getDeadlineMs(t: Todo): number {
   return t.deadline ? new Date(t.deadline + 'T00:00:00').getTime() : Infinity
 }
 
-function byPriorityDateStatus(a: Todo, b: Todo): number {
-  const pDiff = priorityOrder[a.priority] - priorityOrder[b.priority]
-  if (pDiff !== 0) return pDiff
+function byDeadlineThenAlpha(a: Todo, b: Todo): number {
   const aDl = getDeadlineMs(a)
   const bDl = getDeadlineMs(b)
   if (aDl !== bDl) return aDl - bDl
-  return statusOrder[a.status] - statusOrder[b.status]
+  return a.title.localeCompare(b.title)
+}
+
+function daysUntilNext(days: number[], todayDow: number): number {
+  if (days.length === 0) return 7
+  return Math.min(...days.map(d => (d - todayDow + 7) % 7))
+}
+
+function byWeeklyDay(a: Todo, b: Todo): number {
+  const todayDow = new Date().getDay()
+  const aNext = daysUntilNext(a.weeklyDays ?? [], todayDow)
+  const bNext = daysUntilNext(b.weeklyDays ?? [], todayDow)
+  if (aNext !== bNext) return aNext - bNext
+  return a.title.localeCompare(b.title)
 }
 
 function SectionHeader({ label, count }: { label: string; count: number }) {
@@ -44,9 +47,10 @@ export function TodoList({ todos, onStatusClick, onTodoClick }: TodoListProps) {
   const active = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled')
   const done   = todos.filter(t => t.status === 'done' || t.status === 'cancelled')
 
-  const daily = active.filter(t => t.daily).sort(byPriorityDateStatus)
-  const rest  = active.filter(t => !t.daily).sort(byPriorityDateStatus)
-  const completed = done.sort(byPriorityDateStatus)
+  const daily   = active.filter(t => t.daily).sort(byDeadlineThenAlpha)
+  const weekly  = active.filter(t => !t.daily && t.weeklyDays && t.weeklyDays.length > 0).sort(byWeeklyDay)
+  const rest    = active.filter(t => !t.daily && (!t.weeklyDays || t.weeklyDays.length === 0)).sort(byDeadlineThenAlpha)
+  const completed = done.sort(byDeadlineThenAlpha)
 
   if (todos.length === 0) {
     return (
@@ -65,6 +69,8 @@ export function TodoList({ todos, onStatusClick, onTodoClick }: TodoListProps) {
     />
   ))
 
+  const hasHeaders = daily.length > 0 || weekly.length > 0
+
   return (
     <div className="pb-2">
       {daily.length > 0 && (
@@ -74,9 +80,16 @@ export function TodoList({ todos, onStatusClick, onTodoClick }: TodoListProps) {
         </section>
       )}
 
+      {weekly.length > 0 && (
+        <section>
+          <SectionHeader label="Weekly" count={weekly.length} />
+          {renderGroup(weekly)}
+        </section>
+      )}
+
       {rest.length > 0 && (
         <section>
-          {daily.length > 0 && <SectionHeader label="Tasks" count={rest.length} />}
+          {hasHeaders && <SectionHeader label="Tasks" count={rest.length} />}
           {renderGroup(rest)}
         </section>
       )}

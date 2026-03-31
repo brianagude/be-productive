@@ -32,6 +32,7 @@ export interface Todo {
   status: Status
   priority: Priority
   daily: boolean        // resets each day when completed
+  weeklyDays: number[]  // days of week (0=Sun…6=Sat) this task recurs on; empty = not weekly
   tags: string[]
   deadline?: string     // ISO date string
   createdAt: string

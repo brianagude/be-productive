@@ -26,6 +26,7 @@ export function useTodos() {
     title: string,
     priority: Priority = 'none',
     daily = false,
+    weeklyDays: number[] = [],
     tags: string[] = [],
     deadline?: string,
     description?: string
@@ -38,6 +39,7 @@ export function useTodos() {
       status: 'todo',
       priority,
       daily,
+      weeklyDays,
       tags,
       deadline,
       createdAt: now,
