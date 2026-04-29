@@ -2,24 +2,33 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
 interface SiteHeaderProps {
   title: string
   remaining?: number
   onNewTask?: () => void
+  onOpenTimer?: () => void
 }
 
-const navLinkCls = 'text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors'
 const menuRowCls = 'flex items-center w-full text-sm px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-left'
 
-export function SiteHeader({ title, remaining, onNewTask }: SiteHeaderProps) {
+export function SiteHeader({ title, remaining, onNewTask, onOpenTimer }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const isHome = pathname === '/'
 
   const close = () => setMenuOpen(false)
+
+  const handleNewTask = () => {
+    if (onNewTask) { onNewTask() } else { router.push('/#new') }
+  }
+
+  const handleTimer = () => {
+    if (onOpenTimer) { onOpenTimer() } else { router.push('/#timer') }
+  }
 
   return (
     <>
@@ -33,24 +42,26 @@ export function SiteHeader({ title, remaining, onNewTask }: SiteHeaderProps) {
           )}
           {!isHome && (
             <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              Back to tasks
+              Your Tasks
             </Link>
           )}
-          <Link href="/changelog" className={navLinkCls}>Changelog</Link>
-          <Link href="/stats" className={navLinkCls}>Stats</Link>
-          {onNewTask && (
-            <button
-              onClick={onNewTask}
-              className="text-xs px-2.5 py-1 rounded-md bg-primary cursor-pointer text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              New task
-            </button>
-          )}
+          <button
+            onClick={handleTimer}
+            className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+          >
+            Timer
+          </button>
+          <button
+            onClick={handleNewTask}
+            className="text-xs px-2.5 py-1 rounded-md bg-primary cursor-pointer text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            New task
+          </button>
         </div>
 
         {/* Mobile menu button */}
         <button
-          className="sm:hidden text-muted-foreground hover:text-foreground transition-colors"
+          className="sm:hidden cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
           onClick={() => setMenuOpen(prev => !prev)}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
         >
@@ -61,25 +72,28 @@ export function SiteHeader({ title, remaining, onNewTask }: SiteHeaderProps) {
       {/* Mobile dropdown — fixed so it escapes overflow:hidden on the page container */}
       {menuOpen && (
         <>
-          <div className="fixed inset-0 z-40 sm:hidden" onClick={close} />
+          <div className="fixed inset-0 z-40 cursor-pointer sm:hidden" onClick={close} />
           <div className="fixed top-[53px] left-0 right-0 z-50 bg-background border-b border-border shadow-md sm:hidden">
             {remaining !== undefined && (
               <div className="px-4 py-3 text-xs text-muted-foreground border-b border-border/50">
-                {remaining} remaining
+                {remaining} tasks remaining
               </div>
             )}
             {!isHome && (
-              <Link href="/" onClick={close} className={menuRowCls}>
-                Back to tasks
-              </Link>
+              <Link href="/" onClick={close} className={menuRowCls}>Your Tasks</Link>
             )}
-            {onNewTask && (
-              <button onClick={() => { onNewTask(); close() }} className={menuRowCls}>
-                New task
-              </button>
-            )}
-            <Link href="/stats" onClick={close} className={menuRowCls}>Stats</Link>
-            <Link href="/changelog" onClick={close} className={menuRowCls}>Changelog</Link>
+            <button onClick={() => { handleNewTask(); close() }} className={menuRowCls}>
+              New task
+            </button>
+            <button onClick={() => { handleTimer(); close() }} className={menuRowCls}>
+              Timer
+            </button>
+            <Link href="/stats" className={menuRowCls}>
+              Stats
+            </Link>
+            <Link href="/stats" className={menuRowCls}>
+              Changelog
+            </Link>
           </div>
         </>
       )}

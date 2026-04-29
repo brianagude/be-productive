@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getTodos, getTagColors, getCompletions } from '@/lib/storage'
 import { SiteHeader } from '@/components/SiteHeader'
+import { SiteFooter } from '@/components/SiteFooter'
 import { getAllSessions, Session } from '@/lib/pomodoroStorage'
 import { Todo, CompletionRecord } from '@/lib/types'
 
@@ -439,6 +440,7 @@ export default function StatsPage() {
           )}
         </div>
       </div>
+      <SiteFooter />
     </div>
   )
 }

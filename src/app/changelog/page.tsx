@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { SiteHeader } from '@/components/SiteHeader'
+import { SiteFooter } from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Changelog',
@@ -15,6 +16,8 @@ const entries: { date: string; items: string[] }[] = [
       'Task notes are shown on the focus screen while you work',
       'Navigation is now shared across all pages with a mobile-friendly menu',
       'Empty task list now shows a button to create your first task',
+      'Timer moved into a modal — open it from the header on any page',
+      'Added a footer with links to Stats, Changelog, and brianagude.com',
     ],
   },
 ]
@@ -43,6 +46,7 @@ export default function ChangelogPage() {
           ))}
         </div>
       </div>
+      <SiteFooter />
     </div>
   )
 }
