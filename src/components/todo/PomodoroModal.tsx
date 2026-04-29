@@ -1,9 +1,14 @@
 'use client'
 
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
+import { Todo } from '@/lib/types'
 import { UsePomodoroReturn } from '@/hooks/usePomodoro'
 
 interface Props {
   pomodoro: UsePomodoroReturn
+  todos: Todo[]
 }
 
 function formatTime(seconds: number): string {
@@ -12,8 +17,10 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export function PomodoroModal({ pomodoro }: Props) {
-  const { phase, selectedTodoTitle, secondsLeft, totalSeconds, pause, resume, stop, continueWork } = pomodoro
+export function PomodoroModal({ pomodoro, todos }: Props) {
+  const { phase, selectedTodoId, selectedTodoTitle, secondsLeft, totalSeconds, pause, resume, stop, continueWork } = pomodoro
+  const selectedTodo = todos.find(t => t.id === selectedTodoId)
+  const description = selectedTodo?.description
 
   if (phase === 'idle') return null
 
@@ -59,9 +66,30 @@ export function PomodoroModal({ pomodoro }: Props) {
       </span>
 
       {selectedTodoTitle && (
-        <span className="mt-6 text-sm text-white/50 max-w-xs truncate text-center px-4">
+        <span className="mt-6 text-base text-white/50 max-w-sm text-center px-4 leading-snug">
           {selectedTodoTitle}
         </span>
+      )}
+
+      {description && (
+        <div className="mt-4 max-w-sm w-full px-6 max-h-40 overflow-y-auto text-sm text-white/30 leading-relaxed prose prose-sm prose-invert [&_a]:text-white/50 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:my-0.5 [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_pre]:bg-white/10 [&_pre]:p-3 [&_pre]:rounded-md [&_blockquote]:border-l-2 [&_blockquote]:border-white/20 [&_blockquote]:pl-3">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            components={{
+              a: ({ href, children }) => (
+                <a href={href} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                  {children}
+                </a>
+              ),
+              input: ({ type, checked }) =>
+                type === 'checkbox' ? (
+                  <input type="checkbox" checked={checked} readOnly className="mr-1.5" />
+                ) : null,
+            }}
+          >
+            {description}
+          </ReactMarkdown>
+        </div>
       )}
 
       {/* Progress bar */}

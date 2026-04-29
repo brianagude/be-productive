@@ -97,7 +97,7 @@ export function PomodoroWidget({ pomodoro, todos }: Props) {
             <button
               onClick={start}
               disabled={!selectedTodoId}
-              className={`${btnCls} shrink-0 disabled:opacity-30 disabled:cursor-not-allowed`}
+              className={`${btnCls} cursor-pointer shrink-0 disabled:opacity-30 disabled:cursor-not-allowed`}
             >
               Start
             </button>

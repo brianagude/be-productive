@@ -27,7 +27,7 @@ export default function TodoPage() {
   }
 
   const handleCreate = (title: string, fields: Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>>) => {
-    addTodo(title, fields.priority as Priority | undefined, fields.daily ?? false, fields.weeklyDays ?? [], fields.tags ?? [], fields.deadline, fields.description)
+    addTodo(title, fields.priority as Priority | undefined, fields.daily ?? false, fields.weeklyDays ?? [], fields.tags ?? [], fields.deadline, fields.description, fields.backlog ?? false)
   }
 
   const handleUpdate = (id: string, changes: Partial<Todo>) => {
@@ -51,7 +51,7 @@ export default function TodoPage() {
     }
   }
 
-  const remaining = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled').length
+  const remaining = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled' && !t.backlog).length
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
@@ -60,6 +60,12 @@ export default function TodoPage() {
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">{remaining} remaining</span>
           <Link
+            href="/changelog"
+            className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            Changelog
+          </Link>
+          <Link
             href="/stats"
             className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
@@ -67,9 +73,9 @@ export default function TodoPage() {
           </Link>
           <button
             onClick={() => setModal({ mode: 'create' })}
-            className="text-xs px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="text-xs px-2.5 py-1 rounded-md bg-primary cursor-pointer text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            + New task
+            New task
           </button>
         </div>
       </header>
@@ -86,15 +92,16 @@ export default function TodoPage() {
           todos={todos}
           onStatusClick={todo => handleCycleStatus(todo.id, todo.status)}
           onTodoClick={handleTodoClick}
+          onUpdate={handleUpdate}
         />
       </div>
 
       <PomodoroWidget
         pomodoro={pomodoro}
-        todos={todos.filter(t => t.status !== 'done' && t.status !== 'cancelled')}
+        todos={todos.filter(t => t.status !== 'done' && t.status !== 'cancelled' && !t.backlog)}
       />
 
-      <PomodoroModal pomodoro={pomodoro} />
+      <PomodoroModal pomodoro={pomodoro} todos={todos} />
 
       <TodoModal
         state={modal}

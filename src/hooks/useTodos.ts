@@ -29,7 +29,8 @@ export function useTodos() {
     weeklyDays: number[] = [],
     tags: string[] = [],
     deadline?: string,
-    description?: string
+    description?: string,
+    backlog = false
   ) => {
     const now = new Date().toISOString()
     const todo: Todo = {
@@ -40,6 +41,7 @@ export function useTodos() {
       priority,
       daily,
       weeklyDays,
+      backlog,
       tags,
       deadline,
       createdAt: now,

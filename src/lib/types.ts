@@ -33,6 +33,7 @@ export interface Todo {
   priority: Priority
   daily: boolean        // resets each day when completed
   weeklyDays: number[]  // days of week (0=Sun…6=Sat) this task recurs on; empty = not weekly
+  backlog?: boolean     // parked — hidden from timer and remaining count
   tags: string[]
   deadline?: string     // ISO date string
   createdAt: string

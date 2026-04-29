@@ -64,6 +64,22 @@ function PriorityPicker({ value, onChange }: { value: Priority; onChange: (p: Pr
   )
 }
 
+// ── Backlog toggle ─────────────────────────────────────────────────────────────
+
+function BacklogToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className={cn(
+        'flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors cursor-pointer',
+        value ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-medium' : 'text-muted-foreground hover:bg-accent'
+      )}
+    >
+      Backlog
+    </button>
+  )
+}
+
 // ── Daily toggle ───────────────────────────────────────────────────────────────
 
 function DailyToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -382,6 +398,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
   const [priority, setPriority] = useState<Priority>('none')
   const [daily, setDaily] = useState(false)
   const [weeklyDays, setWeeklyDays] = useState<number[]>([])
+  const [backlog, setBacklog] = useState(false)
   const [tags, setTags] = useState<string[]>([])
   const [deadline, setDeadline] = useState<string | undefined>()
   const [descFocused, setDescFocused] = useState(false)
@@ -395,10 +412,11 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
       setPriority(todo.priority)
       setDaily(todo.daily)
       setWeeklyDays(todo.weeklyDays ?? [])
+      setBacklog(todo.backlog ?? false)
       setTags(todo.tags)
       setDeadline(todo.deadline)
     } else {
-      setTitle(''); setDescription(''); setPriority('none'); setDaily(false); setWeeklyDays([]); setTags([]); setDeadline(undefined)
+      setTitle(''); setDescription(''); setPriority('none'); setDaily(false); setWeeklyDays([]); setBacklog(false); setTags([]); setDeadline(undefined)
     }
     setDescFocused(false)
     setTimeout(() => titleRef.current?.focus(), 50)
@@ -419,6 +437,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
       setWeeklyDays(value as number[])
       if ((value as number[]).length > 0) { setDaily(false); if (isEdit && todo) onUpdate(todo.id, { daily: false }) }
     }
+    if (key === 'backlog') setBacklog(value as boolean)
     if (key === 'tags') setTags(value as string[])
     if (key === 'deadline') setDeadline(value as string | undefined)
     if (isEdit && todo) onUpdate(todo.id, { [key]: value })
@@ -439,7 +458,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
     const trimmed = title.trim()
     if (!trimmed) return
     const desc = description.trim()
-    onCreate(trimmed, { description: desc || undefined, priority, daily, weeklyDays, tags, deadline, status: 'todo' })
+    onCreate(trimmed, { description: desc || undefined, priority, daily, weeklyDays, backlog, tags, deadline, status: 'todo' })
     onClose()
   }
 
@@ -511,6 +530,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
           <PriorityPicker value={priority} onChange={p => handleField('priority', p)} />
           <DailyToggle value={daily} onChange={v => handleField('daily', v)} />
           <WeeklyPicker value={weeklyDays} onChange={v => handleField('weeklyDays', v)} />
+          <BacklogToggle value={backlog} onChange={v => handleField('backlog', v)} />
           <TagPicker
             selected={tags}
             onChange={t => handleField('tags', t)}

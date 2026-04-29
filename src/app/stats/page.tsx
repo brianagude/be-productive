@@ -405,7 +405,7 @@ export default function StatsPage() {
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                       <span className="text-sm text-muted-foreground flex-1">{tag}</span>
                       <span className="text-sm font-medium tabular-nums">{fmt(seconds)}</span>
-                      <div className="flex-1 h-[3px] rounded-full bg-border overflow-hidden max-w-24">
+                      <div className="flex-1 h-1 rounded-full bg-border overflow-hidden max-w-24">
                         <div className="h-full rounded-full"
                           style={{
                             width: `${(seconds / data.todayTotal) * 100}%`,
@@ -428,7 +428,7 @@ export default function StatsPage() {
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                       <span className="text-sm text-muted-foreground flex-1">{tag}</span>
                       <span className="text-sm font-medium tabular-nums">{fmt(seconds)}</span>
-                      <div className="flex-1 h-[3px] rounded-full bg-border overflow-hidden max-w-24">
+                      <div className="flex-1 h-1 rounded-full bg-border overflow-hidden max-w-24">
                         <div className="h-full rounded-full"
                           style={{
                             width: `${(seconds / data.weekTotal) * 100}%`,
