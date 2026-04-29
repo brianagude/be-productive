@@ -74,7 +74,7 @@ export function TodoItem({ todo, onStatusClick, onClick }: TodoItemProps) {
       className="flex items-start sm:items-center gap-3 px-4 py-2.5 hover:bg-accent/40 cursor-pointer group rounded-md transition-colors"
     >
       {/* Priority dot */}
-      <div className="w-2 shrink-0 flex justify-center mt-[9px] sm:mt-0">
+      <div className="w-2 shrink-0 flex justify-center mt-2 sm:mt-0">
         {dot.color && (
           <span className={cn('w-1.5 h-1.5 rounded-full', dot.color)} title={dot.label} />
         )}
@@ -95,7 +95,7 @@ export function TodoItem({ todo, onStatusClick, onClick }: TodoItemProps) {
           {hasMeta && <div className="hidden sm:flex shrink-0">{meta}</div>}
         </div>
         {/* Mobile: meta below */}
-        {hasMeta && <div className="sm:hidden mt-1.5">{meta}</div>}
+        {/* {hasMeta && <div className="sm:hidden mt-1.5">{meta}</div>} */}
       </div>
     </div>
   )
