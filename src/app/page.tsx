@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { Todo, Priority } from '@/lib/types'
 import { useTodos } from '@/hooks/useTodos'
 import { usePomodoro } from '@/hooks/usePomodoro'
+import { SiteHeader } from '@/components/SiteHeader'
 import { TodoList } from '@/components/todo/TodoList'
 import { TodoModal, ModalState } from '@/components/todo/TodoModal'
 import { PomodoroWidget } from '@/components/todo/PomodoroWidget'
@@ -55,30 +55,11 @@ export default function TodoPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-      <header className="p-4 border-b border-border shrink-0 flex items-center justify-between">
-        <h1 className="text-sm font-semibold">Things I Need To Do</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">{remaining} remaining</span>
-          <Link
-            href="/changelog"
-            className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            Changelog
-          </Link>
-          <Link
-            href="/stats"
-            className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            Stats
-          </Link>
-          <button
-            onClick={() => setModal({ mode: 'create' })}
-            className="text-xs px-2.5 py-1 rounded-md bg-primary cursor-pointer text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            New task
-          </button>
-        </div>
-      </header>
+      <SiteHeader
+        title="Things I Need To Do"
+        remaining={remaining}
+        onNewTask={() => setModal({ mode: 'create' })}
+      />
 
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border/50 bg-border/15">
         <div className="w-2 shrink-0" />
@@ -93,6 +74,7 @@ export default function TodoPage() {
           onStatusClick={todo => handleCycleStatus(todo.id, todo.status)}
           onTodoClick={handleTodoClick}
           onUpdate={handleUpdate}
+          onNewTask={() => setModal({ mode: 'create' })}
         />
       </div>
 

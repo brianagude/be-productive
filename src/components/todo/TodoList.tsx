@@ -80,9 +80,10 @@ interface TodoListProps {
   onStatusClick: (todo: Todo) => void
   onTodoClick: (todo: Todo) => void
   onUpdate: (id: string, changes: Partial<Todo>) => void
+  onNewTask: () => void
 }
 
-export function TodoList({ todos, onStatusClick, onTodoClick, onUpdate }: TodoListProps) {
+export function TodoList({ todos, onStatusClick, onTodoClick, onUpdate, onNewTask }: TodoListProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ backlog: true })
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOverSection, setDragOverSection] = useState<string | null>(null)
@@ -131,8 +132,14 @@ export function TodoList({ todos, onStatusClick, onTodoClick, onUpdate }: TodoLi
 
   if (todos.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 text-muted-foreground text-sm">
-        No tasks yet.
+      <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground text-sm">
+        <span>No tasks yet.</span>
+        <button
+          onClick={onNewTask}
+          className="cursor-pointer text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          Create a New task
+        </button>
       </div>
     )
   }

@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
 import { getTodos, getTagColors, getCompletions } from '@/lib/storage'
+import { SiteHeader } from '@/components/SiteHeader'
 import { getAllSessions, Session } from '@/lib/pomodoroStorage'
 import { Todo, CompletionRecord } from '@/lib/types'
 
@@ -362,12 +362,7 @@ export default function StatsPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-      <header className="px-6 py-4 border-b border-border shrink-0 flex items-center justify-between">
-        <h1 className="text-sm font-semibold">Stats</h1>
-        <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-          Back to tasks
-        </Link>
-      </header>
+      <SiteHeader title="Stats" />
 
       <div className="flex-1 overflow-y-auto">
         <div className="pb-10">
