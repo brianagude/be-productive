@@ -76,8 +76,6 @@ export default function TodoPage() {
       />
 
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border/50 bg-border/15">
-        {/* <div className="w-2 shrink-0" />
-        <div className="w-5 shrink-0" /> */}
         <span className="flex-1 text-xs text-muted-foreground/50">Task</span>
         <span className="text-xs text-muted-foreground/50 shrink-0 pr-1">Tags / Deadline</span>
       </div>
