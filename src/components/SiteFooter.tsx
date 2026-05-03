@@ -17,12 +17,14 @@ export function SiteFooter({ onAccountClick }: SiteFooterProps) {
         <Link href="/stats" className="text-sm text-white/50 hover:text-white/60 transition-colors">
           Stats
         </Link>
-        <button
-          onClick={onAccountClick}
-          className="text-sm text-white/50 hover:text-white/60 transition-colors cursor-pointer"
-        >
-          Account
-        </button>
+        {process.env.NODE_ENV === 'development' && (
+          <button
+            onClick={onAccountClick}
+            className="text-sm text-white/50 hover:text-white/60 transition-colors cursor-pointer"
+          >
+            Account
+          </button>
+        )}
         <Link href="/changelog" className="text-sm text-white/50 hover:text-white/60 transition-colors">
           Changelog
         </Link>
