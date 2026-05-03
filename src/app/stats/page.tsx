@@ -10,7 +10,7 @@ import { useAuthContext } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { fetchTodos, fetchCompletions, fetchTagColors } from '@/lib/supabase/db'
 import { getAllSessions, Session } from '@/lib/pomodoroStorage'
-import { Todo, CompletionRecord } from '@/lib/types'
+import { Todo, CompletionRecord, TAG_COLOR_PALETTE } from '@/lib/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -38,11 +38,6 @@ function weekStart(): string {
   const mon = new Date(now)
   mon.setDate(now.getDate() + diff)
   return mon.toISOString().slice(0, 10)
-}
-
-function dayLabel(date: string): string {
-  const d = new Date(date + 'T12:00:00')
-  return ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][d.getDay()]
 }
 
 function formatDate(date: string): string {
@@ -193,10 +188,7 @@ function CompletionHeatmap({ completionsByDay }: { completionsByDay: Record<stri
 
 // ── Shared constants ───────────────────────────────────────────────────────────
 
-const FALLBACK_COLORS = [
-  '#60a5fa', '#f87171', '#4ade80', '#facc15',
-  '#a78bfa', '#fb923c', '#2dd4bf', '#f472b6', '#94a3b8',
-]
+const FALLBACK_COLORS = TAG_COLOR_PALETTE.map(c => c.hex)
 
 // ── Guest dashboard data ───────────────────────────────────────────────────────
 
@@ -478,20 +470,17 @@ export default function StatsPage() {
     if (user) router.push('/account')
     else setAuthOpen(true)
   }, [user, router])
-  const [data, setData] = useState<DashboardData | null>(null)
+  const [data, setData] = useState<DashboardData | null>(() => {
+    if (typeof window === 'undefined') return null
+    return compute(getTodos(), getTagColors(), getAllSessions(), getCompletions())
+  })
   const [cloudData, setCloudData] = useState<CloudData | null>(null)
 
-  // Guest data — localStorage, refreshes on tab focus
   const loadData = useCallback(() => {
-    const sessions = getAllSessions()
-    const todos = getTodos()
-    const tagColors = getTagColors()
-    const completions = getCompletions()
-    setData(compute(todos, tagColors, sessions, completions))
+    setData(compute(getTodos(), getTagColors(), getAllSessions(), getCompletions()))
   }, [])
 
   useEffect(() => {
-    loadData()
     const onVisible = () => { if (document.visibilityState === 'visible') loadData() }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
@@ -500,6 +489,7 @@ export default function StatsPage() {
   // Cloud data — DB, loads when user signs in/out
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCloudData(null)
       return
     }

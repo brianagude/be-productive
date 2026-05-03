@@ -98,27 +98,27 @@ export function usePomodoro(): UsePomodoroReturn {
 
   // Store phase in ref so interval callback can read current value
   const phaseRef = useRef<PomodoroPhase>('idle')
-  phaseRef.current = phase
-
   const selectedTodoIdRef = useRef<string | null>(null)
-  selectedTodoIdRef.current = selectedTodoId
-
   const totalSecondsRef = useRef(0)
-  totalSecondsRef.current = totalSeconds
-
   const settingsRef = useRef(settings)
-  settingsRef.current = settings
-
   const audioCtxRef = useRef<AudioContext | null>(null)
 
   // Wall-clock refs for tab-throttling resistance
   const endTimeRef = useRef<number>(0)
   const remainingSecondsRef = useRef<number>(0)
 
+  // Keep refs in sync with state after each render (must be in effect, not render body)
+  useEffect(() => {
+    phaseRef.current = phase
+    selectedTodoIdRef.current = selectedTodoId
+    totalSecondsRef.current = totalSeconds
+    settingsRef.current = settings
+  })
+
   // handlePhaseComplete stored in ref so interval never captures stale closure
   const handlePhaseCompleteRef = useRef<() => void>(() => {})
 
-  handlePhaseCompleteRef.current = useCallback(() => {
+  const handlePhaseComplete = useCallback(() => {
     const currentPhase = phaseRef.current
     const todoId = selectedTodoIdRef.current
     const ctx = audioCtxRef.current
@@ -126,7 +126,7 @@ export function usePomodoro(): UsePomodoroReturn {
     if (currentPhase === 'work') {
       if (todoId) addTimeSpent(todoId, settingsRef.current.workMins * 60)
       if (ctx) playWorkDone(ctx)
-      posthog.capture('pomodoro_work_completed')
+      posthog.capture('timer_completed')
       sendNotification('Work session complete!', 'Time for a break.')
       const breakSecs = settingsRef.current.breakMins * 60
       endTimeRef.current = Date.now() + breakSecs * 1000
@@ -141,6 +141,10 @@ export function usePomodoro(): UsePomodoroReturn {
       setTotalSeconds(0)
     }
   }, [])
+
+  useEffect(() => {
+    handlePhaseCompleteRef.current = handlePhaseComplete
+  }, [handlePhaseComplete])
 
   // Main countdown interval (work and break phases)
   useEffect(() => {
@@ -206,7 +210,11 @@ export function usePomodoro(): UsePomodoroReturn {
 
     const secs = settingsRef.current.workMins * 60
     endTimeRef.current = Date.now() + secs * 1000
-    posthog.capture('pomodoro_start')
+    posthog.capture('timer_started', {
+      work_minutes: settingsRef.current.workMins,
+      break_minutes: settingsRef.current.breakMins,
+      task_selected: !!selectedTodoIdRef.current,
+    })
     setTotalSeconds(secs)
     setSecondsLeft(secs)
     setPhase('work')
@@ -214,13 +222,11 @@ export function usePomodoro(): UsePomodoroReturn {
 
   const pause = useCallback(() => {
     remainingSecondsRef.current = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000))
-    posthog.capture('pomodoro_pause')
     setPhase('paused')
   }, [])
 
   const resume = useCallback(() => {
     endTimeRef.current = Date.now() + remainingSecondsRef.current * 1000
-    posthog.capture('pomodoro_resume')
     setPhase('work')
   }, [])
 
@@ -232,14 +238,12 @@ export function usePomodoro(): UsePomodoroReturn {
     if (todoId && (phaseRef.current === 'work' || phaseRef.current === 'paused') && elapsed > 0) {
       addTimeSpent(todoId, elapsed)
     }
-    posthog.capture('pomodoro_stop')
     setPhase('idle')
     setSecondsLeft(0)
     setTotalSeconds(0)
   }, [])
 
   const skipBreak = useCallback(() => {
-    posthog.capture('pomodoro_break_skipped')
     setPhase('idle')
     setSecondsLeft(0)
     setTotalSeconds(0)
@@ -249,7 +253,6 @@ export function usePomodoro(): UsePomodoroReturn {
     if (!selectedTodoIdRef.current) return
     const secs = settingsRef.current.workMins * 60
     endTimeRef.current = Date.now() + secs * 1000
-    posthog.capture('pomodoro_session_continued')
     setTotalSeconds(secs)
     setSecondsLeft(secs)
     setPhase('work')
@@ -262,7 +265,6 @@ export function usePomodoro(): UsePomodoroReturn {
   }, [])
 
   const updateSettings = useCallback((s: PomodoroSettings) => {
-    posthog.capture('pomodoro_settings_changed', { work_mins: s.workMins, break_mins: s.breakMins })
     setSettings(s)
     savePomodoroSettings(s)
   }, [])
