@@ -13,9 +13,9 @@
 - [x] **Phase 2** — Fix `src/lib/supabase/middleware.ts` (remove redirect block)
 - [x] **Phase 3** — Create `src/middleware.ts` (session refresh wrapper)
 - [x] **Phase 4** — Create auth routes: `src/app/auth/confirm/route.ts` + `src/app/auth/set-password/page.tsx`
-- [ ] **Phase 5** — Create `src/app/api/waitlist/route.ts` (Loops integration)
-- [ ] **Phase 6** — Create `src/lib/supabase/db.ts` (all DB operations)
-- [ ] **Phase 7** — Create `src/hooks/useAuth.ts`
+- [x] **Phase 5** — Create `src/app/api/waitlist/route.ts` (Loops integration)
+- [x] **Phase 6** — Create `src/lib/supabase/db.ts` (all DB operations)
+- [x] **Phase 7** — Create `src/hooks/useAuth.ts`
 - [ ] **Phase 8** — Update `src/hooks/useTodos.ts` (add user param + DB sync)
 - [ ] **Phase 9** — Create `src/components/auth/AuthModal.tsx`
 - [ ] **Phase 10** — Update `src/components/SiteHeader.tsx` (add user icon)
