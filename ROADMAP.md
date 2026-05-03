@@ -26,13 +26,13 @@
 
 ## Test checklist (after all phases complete)
 
-- [ ] Guest path unchanged — todos still load from localStorage
-- [ ] Waitlist: uninvited email → contact appears in Loops
-- [ ] Invite flow: admin invite → email → set-password → signed in
+- [x] Guest path unchanged — todos still load from localStorage
+- [x] Waitlist: uninvited email → contact appears in Loops
+- [x] Invite flow: admin invite → email → set-password → signed in
 - [ ] Forgot password: reset email → set-password → signed in
-- [ ] Sign in: email + password → signed-in state in modal
-- [ ] Migration: first sign-in → localStorage todos copied to DB
-- [ ] Cross-browser: sign in elsewhere → same todos appear
+- [x] Sign in: email + password → signed-in state in modal
+- [x] Migration: first sign-in → localStorage todos copied to DB
+- [x] Cross-browser: sign in elsewhere → same todos appear
 - [ ] No purge: completed tasks not deleted for signed-in users
 - [ ] Enhanced stats visible when signed in
 - [ ] Sign out → falls back to localStorage

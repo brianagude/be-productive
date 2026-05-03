@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import { Todo, Status, Priority, TAG_COLOR_PALETTE } from '@/lib/types'
-import { getGlobalTags, addGlobalTag, getTagColors, setTagColor } from '@/lib/storage'
+import { getGlobalTags, getTagColors } from '@/lib/storage'
 import { formatRelativeDeadline } from '@/lib/dates'
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -153,12 +153,14 @@ function WeeklyPicker({ value, onChange }: { value: number[]; onChange: (v: numb
 // ── Tag picker ─────────────────────────────────────────────────────────────────
 
 function TagPicker({
-  selected, onChange, onRenameTag, onDeleteTag,
+  selected, onChange, onRenameTag, onDeleteTag, onAddTag, onSetTagColor,
 }: {
   selected: string[]
   onChange: (tags: string[]) => void
   onRenameTag: (oldName: string, newName: string) => void
   onDeleteTag: (tag: string) => void
+  onAddTag: (tag: string) => void
+  onSetTagColor: (tag: string, color: string) => void
 }) {
   const [globalTags, setGlobalTags] = useState<string[]>([])
   const [tagColors, setTagColors] = useState<Record<string, string>>({})
@@ -208,14 +210,14 @@ function TagPicker({
   }
 
   const handleColorSelect = (tag: string, hex: string) => {
-    setTagColor(tag, hex)
+    onSetTagColor(tag, hex)
     refresh()
   }
 
   const submitNewTag = () => {
     const tag = newTagInput.trim()
     if (!tag || globalTags.includes(tag)) return
-    addGlobalTag(tag)
+    onAddTag(tag)
     onChange([...selected, tag])
     setNewTagInput('')
     refresh()
@@ -386,9 +388,11 @@ interface TodoModalProps {
   onCycleStatus: (id: string, status: Status) => void
   onRenameTag: (oldName: string, newName: string) => void
   onDeleteTag: (tag: string) => void
+  onAddTag: (tag: string) => void
+  onSetTagColor: (tag: string, color: string) => void
 }
 
-export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycleStatus, onRenameTag, onDeleteTag }: TodoModalProps) {
+export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycleStatus, onRenameTag, onDeleteTag, onAddTag, onSetTagColor }: TodoModalProps) {
   const isOpen = state.mode !== 'closed'
   const isEdit = state.mode === 'edit'
   const todo = isEdit ? state.todo : null
@@ -536,6 +540,8 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
             onChange={t => handleField('tags', t)}
             onRenameTag={onRenameTag}
             onDeleteTag={onDeleteTag}
+            onAddTag={onAddTag}
+            onSetTagColor={onSetTagColor}
           />
           <DeadlinePicker value={deadline} onChange={d => handleField('deadline', d)} />
 

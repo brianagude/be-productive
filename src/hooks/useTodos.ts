@@ -7,6 +7,9 @@ import {
   getTodos, saveTodos, runStartupCleanup,
   renameGlobalTag, deleteGlobalTag,
   addCompletion as addCompletionLocal,
+  addGlobalTag, setTagColor as setTagColorLocal,
+  getGlobalTags, getTagColors,
+  saveGlobalTags as saveGlobalTagsLocal, saveTagColors,
 } from '@/lib/storage'
 import { pruneTimeSpent } from '@/lib/pomodoroStorage'
 import { createClient } from '@/lib/supabase/client'
@@ -15,9 +18,9 @@ import {
   addCompletion as dbAddCompletion,
   fetchGlobalTags, saveGlobalTags as dbSaveGlobalTags,
   fetchTagColors, upsertTagColor, deleteTagColor,
-  isMigrated, migrateFromLocalStorage,
 } from '@/lib/supabase/db'
 import posthog from 'posthog-js'
+import { toast } from 'sonner'
 
 export function useTodos(user: User | null = null) {
   const [todos, setTodos] = useState<Todo[]>([])
@@ -38,18 +41,52 @@ export function useTodos(user: User | null = null) {
     const supabase = createClient()
     ;(async () => {
       try {
-        const migrated = await isMigrated(supabase, user.id)
-        if (!migrated) await migrateFromLocalStorage(supabase, user.id)
+        // Fetch DB todos and local todos in parallel
+        const [dbTodos, dbTags, dbTagColors] = await Promise.all([
+          fetchTodos(supabase, user.id),
+          fetchGlobalTags(supabase, user.id),
+          fetchTagColors(supabase, user.id),
+        ])
 
-        const dbTodos = await fetchTodos(supabase, user.id)
-        const { todos: cleaned, changed } = runStartupCleanup(dbTodos, { skipPurge: true })
+        // Merge: upsert any local todos whose IDs aren't in the DB yet
+        const dbIds = new Set(dbTodos.map(t => t.id))
+        const localOnly = getTodos().filter(t => !dbIds.has(t.id))
+        if (localOnly.length > 0) {
+          await Promise.all(localOnly.map(t => upsertTodo(supabase, user.id, t)))
+          toast.success(
+            `Imported ${localOnly.length} task${localOnly.length === 1 ? '' : 's'} from this browser`,
+            { duration: 4000 }
+          )
+        }
+
+        // Merge tags: union of DB + local, no duplicates
+        const localTags = getGlobalTags()
+        const mergedTags = Array.from(new Set([...dbTags, ...localTags]))
+        if (mergedTags.length > dbTags.length) {
+          await dbSaveGlobalTags(supabase, user.id, mergedTags)
+        }
+
+        // Merge tag colors: add local colors for tags not already in DB
+        const localColors = getTagColors()
+        const newColors = Object.entries(localColors).filter(([tag]) => !dbTagColors[tag])
+        if (newColors.length > 0) {
+          await Promise.all(newColors.map(([tag, color]) => upsertTagColor(supabase, user.id, tag, color)))
+        }
+
+        // Seed localStorage from DB so components that read localStorage get correct values
+        saveGlobalTagsLocal(mergedTags)
+        saveTagColors({ ...dbTagColors, ...Object.fromEntries(newColors) })
+
+        // Full list = DB todos + newly merged local todos
+        const allTodos = [...dbTodos, ...localOnly]
+        const { todos: cleaned, changed } = runStartupCleanup(allTodos, { skipPurge: true })
         pruneTimeSpent(cleaned.map(t => t.id))
         todosRef.current = cleaned
         setTodos(cleaned)
 
         // Persist daily/weekly resets back to DB
         if (changed) {
-          const original = new Map(dbTodos.map(t => [t.id, t]))
+          const original = new Map(allTodos.map(t => [t.id, t]))
           const resetTodos = cleaned.filter(t => original.get(t.id)?.status !== t.status)
           await Promise.all(resetTodos.map(t => upsertTodo(supabase, user.id, t)))
         }
@@ -195,5 +232,27 @@ export function useTodos(user: User | null = null) {
     }
   }, [user, persist])
 
-  return { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag }
+  const addTag = useCallback((tag: string) => {
+    if (!user) {
+      addGlobalTag(tag)
+    } else {
+      const supabase = createClient()
+      fetchGlobalTags(supabase, user.id).then(tags => {
+        if (!tags.includes(tag)) {
+          dbSaveGlobalTags(supabase, user.id, [...tags, tag]).catch(console.error)
+        }
+      }).catch(console.error)
+    }
+  }, [user])
+
+  const setTagColor = useCallback((tag: string, color: string) => {
+    if (!user) {
+      setTagColorLocal(tag, color)
+    } else {
+      const supabase = createClient()
+      upsertTagColor(supabase, user.id, tag, color).catch(console.error)
+    }
+  }, [user])
+
+  return { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag, addTag, setTagColor }
 }

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.LOOPS_API_KEY}`,
     },
-    body: JSON.stringify({ email, source: 'waitlist' }),
+    body: JSON.stringify({ email, source: 'waitlist', userGroup: 'Be Productive Waitlist' }),
   })
 
   // Loops returns 409 if the contact already exists — treat that as success

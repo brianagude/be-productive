@@ -6,7 +6,7 @@ interface SiteFooterProps {
   onAccountClick?: () => void
 }
 
-export function SiteFooter({ user, onAccountClick }: SiteFooterProps) {
+export function SiteFooter({ onAccountClick }: SiteFooterProps) {
   return (
     <footer className="shrink-0 bg-black flex items-center justify-between px-4 py-3">
       <span className="text-sm text-white/50 font-medium">Be Productive</span>
@@ -19,7 +19,6 @@ export function SiteFooter({ user, onAccountClick }: SiteFooterProps) {
           className="text-sm text-white/50 hover:text-white/60 transition-colors cursor-pointer"
         >
           Account
-          {/* {user ? ' ·' : ''} */}
         </button>
         <Link href="/changelog" className="text-sm text-white/50 hover:text-white/60 transition-colors">
           Changelog

@@ -61,13 +61,17 @@ export function SiteHeader({ title, remaining, onNewTask, onOpenTimer, user, onA
           >
             New task
           </button>
-          {/* <button
+          <button
             onClick={onAccountClick}
             aria-label="Account"
-            className={`cursor-pointer transition-colors ${user ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            className="cursor-pointer transition-colors"
           >
-            <UserIcon width={18} height={18} />
-          </button> */}
+            {user && (
+              <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center leading-none">
+                {user.email?.[0].toUpperCase()}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Mobile menu button */}

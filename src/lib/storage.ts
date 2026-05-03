@@ -61,6 +61,11 @@ export function setTagColor(tag: string, color: string): void {
   localStorage.setItem(TAG_COLORS_KEY, JSON.stringify({ ...colors, [tag]: color }))
 }
 
+export function saveTagColors(colors: Record<string, string>): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(TAG_COLORS_KEY, JSON.stringify(colors))
+}
+
 // ── Todos ──────────────────────────────────────────────────────────────────────
 
 export function getTodos(): Todo[] {

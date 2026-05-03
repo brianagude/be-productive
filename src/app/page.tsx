@@ -15,7 +15,7 @@ import { AuthModal } from '@/components/auth/AuthModal'
 
 export default function TodoPage() {
   const { user, signOut } = useAuth()
-  const { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag } = useTodos(user)
+  const { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag, addTag, setTagColor } = useTodos(user)
   const [authOpen, setAuthOpen] = useState(false)
   const pomodoro = usePomodoro()
   const [modal, setModal] = useState<ModalState>({ mode: 'closed' })
@@ -123,6 +123,8 @@ export default function TodoPage() {
         onCycleStatus={handleCycleStatus}
         onRenameTag={handleRenameTag}
         onDeleteTag={handleDeleteTag}
+        onAddTag={addTag}
+        onSetTagColor={setTagColor}
       />
     </div>
   )
