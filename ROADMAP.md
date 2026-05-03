@@ -16,11 +16,11 @@
 - [x] **Phase 5** — Create `src/app/api/waitlist/route.ts` (Loops integration)
 - [x] **Phase 6** — Create `src/lib/supabase/db.ts` (all DB operations)
 - [x] **Phase 7** — Create `src/hooks/useAuth.ts`
-- [ ] **Phase 8** — Update `src/hooks/useTodos.ts` (add user param + DB sync)
-- [ ] **Phase 9** — Create `src/components/auth/AuthModal.tsx`
-- [ ] **Phase 10** — Update `src/components/SiteHeader.tsx` (add user icon)
-- [ ] **Phase 11** — Update `src/app/page.tsx` (wire everything together)
-- [ ] **Phase 12** — Update `src/app/stats/page.tsx` (enhanced stats for signed-in users)
+- [x] **Phase 8** — Update `src/hooks/useTodos.ts` (add user param + DB sync)
+- [x] **Phase 9** — Create `src/components/auth/AuthModal.tsx`
+- [x] **Phase 10** — Update `src/components/SiteHeader.tsx` (add user icon)
+- [x] **Phase 11** — Update `src/app/page.tsx` (wire everything together)
+- [x] **Phase 12** — Update `src/app/stats/page.tsx` (enhanced stats for signed-in users)
 
 ---
 

@@ -9,6 +9,7 @@ A personal productivity app with task management, a Pomodoro timer, and stats tr
 Be Productive is a no-friction task manager centered around focused work sessions. You build a list of tasks, run timed work sessions against them, and track how you're doing over time.
 
 **Tasks**
+
 - Create tasks with a title, description, priority (urgent → none), deadline, and color-coded tags
 - Cycle status with a single click: `todo → in progress → done → cancelled`
 - Organize into sections: **Daily** (auto-resets each day), **Weekly** (recurs on chosen days), **Tasks**, and **Backlog** (hidden until you need it)
@@ -16,6 +17,7 @@ Be Productive is a no-friction task manager centered around focused work session
 - Collapse/expand sections to stay focused
 
 **Pomodoro timer**
+
 - Link a timer session to any active task
 - Configurable work and break lengths
 - Audio cues at session end, ambient chime at the 1-minute break warning
@@ -24,27 +26,29 @@ Be Productive is a no-friction task manager centered around focused work session
 - Time logged per task and used in stats
 
 **Stats page (`/stats`)**
+
 - Full-year completion heatmap (GitHub-style)
 - Completions today and this week
 - Time spent today and this week, broken down by tag
 - Streak tracking for focus sessions and completions
 
 **Changelog (`/changelog`)**
+
 - Running list of what's changed in the app
 
 ## Pages
 
-| Route | What's there |
-|---|---|
-| `/` | Main task list |
-| `/stats` | Productivity dashboard |
-| `/changelog` | Release notes |
+| Route        | What's there           |
+| ------------ | ---------------------- |
+| `/`          | Main task list         |
+| `/stats`     | Productivity dashboard |
+| `/changelog` | Release notes          |
 
 ## Running locally
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -52,22 +56,22 @@ Open [http://localhost:3000](http://localhost:3000).
 Other commands:
 
 ```bash
-npm run build   # production build
-npm run start   # serve the production build
-npm run lint    # lint
+pnpm run build   # production build
+pnpm run start   # serve the production build
+pnpm run lint    # lint
 ```
 
 ## Tech stack
 
-| Layer | What |
-|---|---|
-| Framework | Next.js 16 (App Router), React 19 |
-| Language | TypeScript |
-| Styling | Tailwind CSS v4, shadcn/ui (Base UI primitives) |
-| Icons | Phosphor Icons |
-| Date utils | date-fns, react-day-picker |
-| Storage | `localStorage` (no backend currently) |
-| Analytics | PostHog |
+| Layer      | What                                            |
+| ---------- | ----------------------------------------------- |
+| Framework  | Next.js 16 (App Router), React 19               |
+| Language   | TypeScript                                      |
+| Styling    | Tailwind CSS v4, shadcn/ui (Base UI primitives) |
+| Icons      | Phosphor Icons                                  |
+| Date utils | date-fns, react-day-picker                      |
+| Storage    | `localStorage` (no backend currently)           |
+| Analytics  | PostHog                                         |
 
 ## Project structure
 

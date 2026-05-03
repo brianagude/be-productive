@@ -4,17 +4,21 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
+import { type User } from '@supabase/supabase-js'
+import { UserIcon } from '@/components/icons/UserSquareIcon'
 
 interface SiteHeaderProps {
   title: string
   remaining?: number
   onNewTask?: () => void
   onOpenTimer?: () => void
+  user?: User | null
+  onAccountClick?: () => void
 }
 
 const menuRowCls = 'flex items-center w-full text-sm px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-left'
 
-export function SiteHeader({ title, remaining, onNewTask, onOpenTimer }: SiteHeaderProps) {
+export function SiteHeader({ title, remaining, onNewTask, onOpenTimer, user, onAccountClick }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -57,6 +61,13 @@ export function SiteHeader({ title, remaining, onNewTask, onOpenTimer }: SiteHea
           >
             New task
           </button>
+          {/* <button
+            onClick={onAccountClick}
+            aria-label="Account"
+            className={`cursor-pointer transition-colors ${user ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <UserIcon width={18} height={18} />
+          </button> */}
         </div>
 
         {/* Mobile menu button */}
@@ -87,6 +98,9 @@ export function SiteHeader({ title, remaining, onNewTask, onOpenTimer }: SiteHea
             </button>
             <button onClick={() => { handleTimer(); close() }} className={menuRowCls}>
               Timer
+            </button>
+            <button onClick={() => { onAccountClick?.(); close() }} className={menuRowCls}>
+              Account {user ? '·' : ''}
             </button>
             <Link href="/stats" className={menuRowCls}>
               Stats

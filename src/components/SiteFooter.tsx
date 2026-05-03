@@ -1,6 +1,12 @@
 import Link from 'next/link'
+import { type User } from '@supabase/supabase-js'
 
-export function SiteFooter() {
+interface SiteFooterProps {
+  user?: User | null
+  onAccountClick?: () => void
+}
+
+export function SiteFooter({ user, onAccountClick }: SiteFooterProps) {
   return (
     <footer className="shrink-0 bg-black flex items-center justify-between px-4 py-3">
       <span className="text-sm text-white/50 font-medium">Be Productive</span>
@@ -8,6 +14,13 @@ export function SiteFooter() {
         <Link href="/stats" className="text-sm text-white/50 hover:text-white/60 transition-colors">
           Stats
         </Link>
+        <button
+          onClick={onAccountClick}
+          className="text-sm text-white/50 hover:text-white/60 transition-colors cursor-pointer"
+        >
+          Account
+          {/* {user ? ' ·' : ''} */}
+        </button>
         <Link href="/changelog" className="text-sm text-white/50 hover:text-white/60 transition-colors">
           Changelog
         </Link>

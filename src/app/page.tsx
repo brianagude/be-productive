@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Todo, Priority } from '@/lib/types'
 import { useTodos } from '@/hooks/useTodos'
+import { useAuth } from '@/hooks/useAuth'
 import { usePomodoro } from '@/hooks/usePomodoro'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
@@ -10,9 +11,12 @@ import { TodoList } from '@/components/todo/TodoList'
 import { TodoModal, ModalState } from '@/components/todo/TodoModal'
 import { TimerModal } from '@/components/todo/TimerModal'
 import { PomodoroModal } from '@/components/todo/PomodoroModal'
+import { AuthModal } from '@/components/auth/AuthModal'
 
 export default function TodoPage() {
-  const { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag } = useTodos()
+  const { user, signOut } = useAuth()
+  const { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag } = useTodos(user)
+  const [authOpen, setAuthOpen] = useState(false)
   const pomodoro = usePomodoro()
   const [modal, setModal] = useState<ModalState>({ mode: 'closed' })
   const [timerOpen, setTimerOpen] = useState(false)
@@ -73,6 +77,8 @@ export default function TodoPage() {
         remaining={remaining}
         onNewTask={() => setModal({ mode: 'create' })}
         onOpenTimer={() => setTimerOpen(true)}
+        user={user}
+        onAccountClick={() => setAuthOpen(true)}
       />
 
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border/50 bg-border/15">
@@ -99,7 +105,14 @@ export default function TodoPage() {
 
       <PomodoroModal pomodoro={pomodoro} todos={todos} />
 
-      <SiteFooter />
+      <SiteFooter user={user} onAccountClick={() => setAuthOpen(true)} />
+
+      <AuthModal
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        user={user}
+        onSignOut={signOut}
+      />
 
       <TodoModal
         state={modal}
