@@ -2,13 +2,13 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuthContext } from '@/contexts/AuthContext'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
 import { Button } from '@/components/ui/button'
 
 export default function AccountPage() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading, signOut } = useAuthContext()
   const router = useRouter()
 
   useEffect(() => {

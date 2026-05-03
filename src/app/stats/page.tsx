@@ -6,7 +6,7 @@ import { getTodos, getTagColors, getCompletions } from '@/lib/storage'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
 import { AuthModal } from '@/components/auth/AuthModal'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuthContext } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { fetchTodos, fetchCompletions, fetchTagColors } from '@/lib/supabase/db'
 import { getAllSessions, Session } from '@/lib/pomodoroStorage'
@@ -470,7 +470,7 @@ function BarRow({ label, count, max, color }: { label: string; count: number; ma
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function StatsPage() {
-  const { user } = useAuth()
+  const { user } = useAuthContext()
   const router = useRouter()
   const [authOpen, setAuthOpen] = useState(false)
 

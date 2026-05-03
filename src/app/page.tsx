@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Todo, Priority } from '@/lib/types'
 import { useTodos } from '@/hooks/useTodos'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { TagsProvider } from '@/contexts/TagsContext'
 import { usePomodoro } from '@/hooks/usePomodoro'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
@@ -15,9 +16,9 @@ import { PomodoroModal } from '@/components/todo/PomodoroModal'
 import { AuthModal } from '@/components/auth/AuthModal'
 
 export default function TodoPage() {
-  const { user } = useAuth()
+  const { user } = useAuthContext()
   const router = useRouter()
-  const { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag, addTag, setTagColor } = useTodos(user)
+  const { todos, globalTags, tagColors, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag, addTag, setTagColor } = useTodos()
   const [authOpen, setAuthOpen] = useState(false)
 
   const handleAccountClick = useCallback(() => {
@@ -79,6 +80,7 @@ export default function TodoPage() {
   const remaining = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled' && !t.backlog).length
 
   return (
+    <TagsProvider value={{ globalTags, tagColors, addTag, setTagColor }}>
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <SiteHeader
         title="Things I Need To Do"
@@ -129,9 +131,8 @@ export default function TodoPage() {
         onCycleStatus={handleCycleStatus}
         onRenameTag={handleRenameTag}
         onDeleteTag={handleDeleteTag}
-        onAddTag={addTag}
-        onSetTagColor={setTagColor}
       />
     </div>
+    </TagsProvider>
   )
 }

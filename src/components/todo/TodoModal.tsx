@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import { Todo, Status, Priority, TAG_COLOR_PALETTE } from '@/lib/types'
-import { getGlobalTags, getTagColors } from '@/lib/storage'
+import { useTags } from '@/contexts/TagsContext'
 import { formatRelativeDeadline } from '@/lib/dates'
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -153,30 +153,17 @@ function WeeklyPicker({ value, onChange }: { value: number[]; onChange: (v: numb
 // ── Tag picker ─────────────────────────────────────────────────────────────────
 
 function TagPicker({
-  selected, onChange, onRenameTag, onDeleteTag, onAddTag, onSetTagColor,
+  selected, onChange, onRenameTag, onDeleteTag,
 }: {
   selected: string[]
   onChange: (tags: string[]) => void
   onRenameTag: (oldName: string, newName: string) => void
   onDeleteTag: (tag: string) => void
-  onAddTag: (tag: string) => void
-  onSetTagColor: (tag: string, color: string) => void
 }) {
-  const [globalTags, setGlobalTags] = useState<string[]>([])
-  const [tagColors, setTagColors] = useState<Record<string, string>>({})
+  const { globalTags, tagColors, addTag: onAddTag, setTagColor: onSetTagColor } = useTags()
   const [editingTag, setEditingTag] = useState<string | null>(null)
   const [nameInput, setNameInput] = useState('')
   const [newTagInput, setNewTagInput] = useState('')
-
-  const refresh = () => {
-    setGlobalTags(getGlobalTags())
-    setTagColors(getTagColors())
-  }
-
-  useEffect(() => { refresh() }, [])
-
-  // Sync when selected changes from outside (e.g. parent rename/delete)
-  useEffect(() => { refresh() }, [selected])
 
   const toggle = (tag: string) => {
     onChange(selected.includes(tag) ? selected.filter(t => t !== tag) : [...selected, tag])
@@ -193,25 +180,21 @@ function TagPicker({
     const newName = nameInput.trim()
     if (newName && newName !== oldName) {
       onRenameTag(oldName, newName)
-      // Update local selected state — the parent will also sync todos atomically
       if (selected.includes(oldName)) {
         onChange(selected.map(t => t === oldName ? newName : t))
       }
     }
     setEditingTag(null)
-    refresh()
   }
 
   const handleDelete = (tag: string) => {
     onDeleteTag(tag)
     if (selected.includes(tag)) onChange(selected.filter(t => t !== tag))
     setEditingTag(null)
-    refresh()
   }
 
   const handleColorSelect = (tag: string, hex: string) => {
     onSetTagColor(tag, hex)
-    refresh()
   }
 
   const submitNewTag = () => {
@@ -220,7 +203,6 @@ function TagPicker({
     onAddTag(tag)
     onChange([...selected, tag])
     setNewTagInput('')
-    refresh()
   }
 
   const hasSelected = selected.length > 0
@@ -388,11 +370,9 @@ interface TodoModalProps {
   onCycleStatus: (id: string, status: Status) => void
   onRenameTag: (oldName: string, newName: string) => void
   onDeleteTag: (tag: string) => void
-  onAddTag: (tag: string) => void
-  onSetTagColor: (tag: string, color: string) => void
 }
 
-export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycleStatus, onRenameTag, onDeleteTag, onAddTag, onSetTagColor }: TodoModalProps) {
+export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycleStatus, onRenameTag, onDeleteTag }: TodoModalProps) {
   const isOpen = state.mode !== 'closed'
   const isEdit = state.mode === 'edit'
   const todo = isEdit ? state.todo : null
@@ -540,8 +520,6 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
             onChange={t => handleField('tags', t)}
             onRenameTag={onRenameTag}
             onDeleteTag={onDeleteTag}
-            onAddTag={onAddTag}
-            onSetTagColor={onSetTagColor}
           />
           <DeadlinePicker value={deadline} onChange={d => handleField('deadline', d)} />
 

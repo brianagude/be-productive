@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Spline_Sans, Spline_Sans_Mono } from "next/font/google";
-import { Toaster } from "sonner";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const splineSans = Spline_Sans({
@@ -55,8 +55,7 @@ export default function RootLayout({
       <body
         className={`${splineSans.variable} ${splineMono.variable} antialiased`}
       >
-        {children}
-        <Toaster position="bottom-center" />
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

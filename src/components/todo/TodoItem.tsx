@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Todo, Priority } from '@/lib/types'
-import { getTagColors } from '@/lib/storage'
+import { useTags } from '@/contexts/TagsContext'
 import { formatRelativeDeadline } from '@/lib/dates'
 import { StatusButton } from './StatusButton'
 import { cn } from '@/lib/utils'
@@ -25,9 +24,7 @@ export function TodoItem({ todo, onStatusClick, onClick }: TodoItemProps) {
   const isDone = todo.status === 'done' || todo.status === 'cancelled'
   const dot = priorityDot[todo.priority]
   const visibleTags = todo.tags
-  const [tagColors, setTagColors] = useState<Record<string, string>>({})
-
-  useEffect(() => { setTagColors(getTagColors()) }, [todo.tags])
+  const { tagColors } = useTags()
 
   const hasMeta = visibleTags.length > 0 || !!todo.deadline
 
