@@ -3,7 +3,7 @@ import { type NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   return await updateSession(request)
 }
 
