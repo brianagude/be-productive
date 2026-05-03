@@ -5,16 +5,16 @@ export type Status = 'todo' | 'in-progress' | 'done' | 'cancelled'
 export const PLATFORM_TAGS: string[] = []
 
 export const TAG_COLOR_PALETTE = [
-  { name: 'red',    hex: '#E84337' },
-  { name: 'orange', hex: '#FE8601' },
-  { name: 'yellow', hex: '#FFD834' },
-  { name: 'lime',   hex: '#AEC95F' },
-  { name: 'green',  hex: '#3E7E27' },
-  { name: 'teal',   hex: '#70A5A3' },
-  { name: 'blue',   hex: '#426AA9' },
-  { name: 'violet', hex: '#8776A6' },
-  { name: 'pink',   hex: '#F285A1' },
-  { name: 'gray',   hex: '#94a3b8' },
+  { name: 'red',    hex: '#7f2922' },
+  { name: 'orange', hex: '#df9a81' },
+  { name: 'yellow', hex: '#dccf73' },
+  { name: 'lime',   hex: '#8a9445' },
+  { name: 'green',  hex: '#477760' },
+  { name: 'teal',   hex: '#7298af' },
+  { name: 'blue',   hex: '#295ba4' },
+  { name: 'violet', hex: '#c8b2ce' },
+  { name: 'pink',   hex: '#e59bc4' },
+  { name: 'gray',   hex: '#a9a392' },
 ] as const
 
 export interface CompletionRecord {
@@ -31,7 +31,7 @@ export interface Todo {
   description?: string
   status: Status
   priority: Priority
-  daily: boolean        // resets each day when completed
+  daily: boolean        // resets daily when completed
   weeklyDays: number[]  // days of week (0=Sun…6=Sat) this task recurs on; empty = not weekly
   backlog?: boolean     // parked — hidden from timer and remaining count
   tags: string[]
