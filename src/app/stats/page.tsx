@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getTodos, getTagColors, getCompletions } from '@/lib/storage'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
@@ -469,8 +470,14 @@ function BarRow({ label, count, max, color }: { label: string; count: number; ma
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function StatsPage() {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
+  const router = useRouter()
   const [authOpen, setAuthOpen] = useState(false)
+
+  const handleAccountClick = useCallback(() => {
+    if (user) router.push('/account')
+    else setAuthOpen(true)
+  }, [user, router])
   const [data, setData] = useState<DashboardData | null>(null)
   const [cloudData, setCloudData] = useState<CloudData | null>(null)
 
@@ -518,7 +525,7 @@ export default function StatsPage() {
       <SiteHeader
         title="Stats"
         user={user}
-        onAccountClick={() => setAuthOpen(true)}
+        onAccountClick={handleAccountClick}
       />
 
       <div className="flex-1 overflow-y-auto">
@@ -694,13 +701,11 @@ export default function StatsPage() {
         </div>
       </div>
 
-      <SiteFooter user={user} onAccountClick={() => setAuthOpen(true)} />
+      <SiteFooter user={user} onAccountClick={handleAccountClick} />
 
       <AuthModal
         open={authOpen}
         onOpenChange={setAuthOpen}
-        user={user}
-        onSignOut={signOut}
       />
     </div>
   )

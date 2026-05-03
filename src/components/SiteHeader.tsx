@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { type User } from '@supabase/supabase-js'
-import { UserIcon } from '@/components/icons/UserSquareIcon'
 
 interface SiteHeaderProps {
   title: string
@@ -88,7 +87,7 @@ export function SiteHeader({ title, remaining, onNewTask, onOpenTimer, user, onA
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-40 cursor-pointer sm:hidden" onClick={close} />
-          <div className="fixed top-[53px] left-0 right-0 z-50 bg-background border-b border-border shadow-md sm:hidden">
+          <div className="fixed top-14 left-0 right-0 z-50 bg-background border-b border-border shadow-md sm:hidden">
             {remaining !== undefined && (
               <div className="px-4 py-3 text-xs text-muted-foreground border-b border-border/50">
                 {remaining} tasks remaining
