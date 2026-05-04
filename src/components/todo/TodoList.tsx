@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Todo } from '@/lib/types'
 import { TodoItem } from './TodoItem'
 import { cn } from '@/lib/utils'
+import posthog from 'posthog-js'
 
 function getDeadlineMs(t: Todo): number {
   return t.deadline ? new Date(t.deadline + 'T00:00:00').getTime() : Infinity
@@ -88,7 +89,11 @@ export function TodoList({ todos, onStatusClick, onTodoClick, onUpdate, onNewTas
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOverSection, setDragOverSection] = useState<string | null>(null)
 
-  const toggle = (key: string) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  const toggle = (key: string) => {
+    const next = !collapsed[key]
+    posthog.capture('section_toggled', { section: key, action: next ? 'collapsed' : 'expanded' })
+    setCollapsed(prev => ({ ...prev, [key]: next }))
+  }
 
   const handleDragStart = (e: React.DragEvent, todoId: string) => {
     setDraggingId(todoId)

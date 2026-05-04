@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import { Todo, Status, Priority, TAG_COLOR_PALETTE } from '@/lib/types'
-import { getGlobalTags, addGlobalTag, getTagColors, setTagColor } from '@/lib/storage'
+import { useTags } from '@/contexts/TagsContext'
 import { formatRelativeDeadline } from '@/lib/dates'
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -160,21 +160,10 @@ function TagPicker({
   onRenameTag: (oldName: string, newName: string) => void
   onDeleteTag: (tag: string) => void
 }) {
-  const [globalTags, setGlobalTags] = useState<string[]>([])
-  const [tagColors, setTagColors] = useState<Record<string, string>>({})
+  const { globalTags, tagColors, addTag: onAddTag, setTagColor: onSetTagColor } = useTags()
   const [editingTag, setEditingTag] = useState<string | null>(null)
   const [nameInput, setNameInput] = useState('')
   const [newTagInput, setNewTagInput] = useState('')
-
-  const refresh = () => {
-    setGlobalTags(getGlobalTags())
-    setTagColors(getTagColors())
-  }
-
-  useEffect(() => { refresh() }, [])
-
-  // Sync when selected changes from outside (e.g. parent rename/delete)
-  useEffect(() => { refresh() }, [selected])
 
   const toggle = (tag: string) => {
     onChange(selected.includes(tag) ? selected.filter(t => t !== tag) : [...selected, tag])
@@ -191,34 +180,29 @@ function TagPicker({
     const newName = nameInput.trim()
     if (newName && newName !== oldName) {
       onRenameTag(oldName, newName)
-      // Update local selected state — the parent will also sync todos atomically
       if (selected.includes(oldName)) {
         onChange(selected.map(t => t === oldName ? newName : t))
       }
     }
     setEditingTag(null)
-    refresh()
   }
 
   const handleDelete = (tag: string) => {
     onDeleteTag(tag)
     if (selected.includes(tag)) onChange(selected.filter(t => t !== tag))
     setEditingTag(null)
-    refresh()
   }
 
   const handleColorSelect = (tag: string, hex: string) => {
-    setTagColor(tag, hex)
-    refresh()
+    onSetTagColor(tag, hex)
   }
 
   const submitNewTag = () => {
     const tag = newTagInput.trim()
     if (!tag || globalTags.includes(tag)) return
-    addGlobalTag(tag)
+    onAddTag(tag)
     onChange([...selected, tag])
     setNewTagInput('')
-    refresh()
   }
 
   const hasSelected = selected.length > 0

@@ -61,6 +61,11 @@ export function setTagColor(tag: string, color: string): void {
   localStorage.setItem(TAG_COLORS_KEY, JSON.stringify({ ...colors, [tag]: color }))
 }
 
+export function saveTagColors(colors: Record<string, string>): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(TAG_COLORS_KEY, JSON.stringify(colors))
+}
+
 // ── Todos ──────────────────────────────────────────────────────────────────────
 
 export function getTodos(): Todo[] {
@@ -107,7 +112,7 @@ export function clearCompletions(): void {
  * 2. Purge done/cancelled todos older than 7 days
  * 3. Reset daily todos if it's a new day
  */
-export function runStartupCleanup(todos: Todo[]): { todos: Todo[]; changed: boolean } {
+export function runStartupCleanup(todos: Todo[], options?: { skipPurge?: boolean }): { todos: Todo[]; changed: boolean } {
   let changed = false
   const now = new Date()
   const today = now.toDateString()
@@ -122,15 +127,17 @@ export function runStartupCleanup(todos: Todo[]): { todos: Todo[]; changed: bool
     return t
   })
 
-  // 2. Purge completed todos older than 7 days
-  result = result.filter(t => {
-    const isComplete = t.status === 'done' || t.status === 'cancelled'
-    if (isComplete && new Date(t.updatedAt) < weekAgo) {
-      changed = true
-      return false
-    }
-    return true
-  })
+  // 2. Purge completed todos older than 7 days (guests only — cloud users keep full history)
+  if (!options?.skipPurge) {
+    result = result.filter(t => {
+      const isComplete = t.status === 'done' || t.status === 'cancelled'
+      if (isComplete && new Date(t.updatedAt) < weekAgo) {
+        changed = true
+        return false
+      }
+      return true
+    })
+  }
 
   // 3. Reset daily/weekly todos if it's a new day
   const todayDow = now.getDay() // 0=Sun…6=Sat

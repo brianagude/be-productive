@@ -7,6 +7,15 @@ export const metadata: Metadata = {
 }
 
 const entries: { date: string; items: string[] }[] = [
+  // {
+  //   date: 'May 3, 2026',
+  //   items: [
+  //     'Sign in to sync your tasks and tags across any browser or device',
+  //     'Your existing tasks and tags are automatically imported when you first sign in',
+  //     'Tag colors now update everywhere instantly when you change them',
+  //     'Fixed an issue where deleted tags and tasks would reappear after signing back in',
+  //   ],
+  // },
   {
     date: 'April 29, 2026',
     items: [

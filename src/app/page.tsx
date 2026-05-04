@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Todo, Priority } from '@/lib/types'
 import { useTodos } from '@/hooks/useTodos'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { TagsProvider } from '@/contexts/TagsContext'
 import { usePomodoro } from '@/hooks/usePomodoro'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
@@ -10,23 +13,33 @@ import { TodoList } from '@/components/todo/TodoList'
 import { TodoModal, ModalState } from '@/components/todo/TodoModal'
 import { TimerModal } from '@/components/todo/TimerModal'
 import { PomodoroModal } from '@/components/todo/PomodoroModal'
+import { AuthModal } from '@/components/auth/AuthModal'
 
 export default function TodoPage() {
-  const { todos, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag } = useTodos()
-  const pomodoro = usePomodoro()
-  const [modal, setModal] = useState<ModalState>({ mode: 'closed' })
-  const [timerOpen, setTimerOpen] = useState(false)
+  const { user } = useAuthContext()
+  const router = useRouter()
+  const { todos, globalTags, tagColors, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag, addTag, setTagColor } = useTodos()
+  const [authOpen, setAuthOpen] = useState(false)
 
-  useEffect(() => {
-    const hash = window.location.hash
-    if (hash === '#new') {
-      setModal({ mode: 'create' })
+  const handleAccountClick = useCallback(() => {
+    if (user) router.push('/account')
+    else setAuthOpen(true)
+  }, [user, router])
+  const pomodoro = usePomodoro()
+  const [modal, setModal] = useState<ModalState>(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#new') {
       history.replaceState(null, '', '/')
-    } else if (hash === '#timer') {
-      setTimerOpen(true)
-      history.replaceState(null, '', '/')
+      return { mode: 'create' }
     }
-  }, [])
+    return { mode: 'closed' }
+  })
+  const [timerOpen, setTimerOpen] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#timer') {
+      history.replaceState(null, '', '/')
+      return true
+    }
+    return false
+  })
 
   const handleTodoClick = (todo: Todo) => setModal({ mode: 'edit', todo })
 
@@ -67,12 +80,15 @@ export default function TodoPage() {
   const remaining = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled' && !t.backlog).length
 
   return (
+    <TagsProvider value={{ globalTags, tagColors, addTag, setTagColor }}>
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <SiteHeader
         title="Things I Need To Do"
         remaining={remaining}
         onNewTask={() => setModal({ mode: 'create' })}
         onOpenTimer={() => setTimerOpen(true)}
+        user={user}
+        onAccountClick={handleAccountClick}
       />
 
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border/50 bg-border/15">
@@ -99,7 +115,12 @@ export default function TodoPage() {
 
       <PomodoroModal pomodoro={pomodoro} todos={todos} />
 
-      <SiteFooter />
+      <SiteFooter user={user} onAccountClick={handleAccountClick} />
+
+      <AuthModal
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+      />
 
       <TodoModal
         state={modal}
@@ -112,5 +133,6 @@ export default function TodoPage() {
         onDeleteTag={handleDeleteTag}
       />
     </div>
+    </TagsProvider>
   )
 }

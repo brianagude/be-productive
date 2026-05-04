@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Todo, Status, Priority, PLATFORM_TAGS } from '@/lib/types'
-import { getGlobalTags, addGlobalTag } from '@/lib/storage'
+import { useTags } from '@/contexts/TagsContext'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { StatusButton } from './StatusButton'
 import { Button } from '@/components/ui/button'
@@ -33,11 +33,7 @@ export function TodoDetail({ todo, onClose, onUpdate, onDelete, onCycleStatus }:
   const [description, setDescription] = useState('')
   const [customTagInput, setCustomTagInput] = useState('')
   const [calOpen, setCalOpen] = useState(false)
-  const [globalTags, setGlobalTags] = useState<string[]>([])
-
-  useEffect(() => {
-    setGlobalTags(getGlobalTags())
-  }, [])
+  const { globalTags, addTag: addGlobalTag } = useTags()
 
   useEffect(() => {
     if (todo) {
@@ -68,7 +64,6 @@ export function TodoDetail({ todo, onClose, onUpdate, onDelete, onCycleStatus }:
     const tag = customTagInput.trim().toLowerCase().replace(/\s+/g, '-')
     if (!tag) { setCustomTagInput(''); return }
     addGlobalTag(tag)
-    setGlobalTags(getGlobalTags())
     if (!todo.tags.includes(tag)) {
       onUpdate(todo.id, { tags: [...todo.tags, tag] })
     }
