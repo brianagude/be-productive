@@ -52,11 +52,11 @@ export function useTodos() {
           fetchTagColors(supabase, user!.id),
         ])
 
-        // Migrate any local-only items to DB. On subsequent loads localStorage
-        // will be empty (cleared below), so this becomes a no-op automatically
-        // — no flags or tombstones needed to prevent resurrection.
+        // Migrate any local-only items to DB (production only — skip on localhost
+        // to avoid polluting the DB with dev/test data).
+        const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost'
         const dbIds = new Set(dbTodos.map(t => t.id))
-        const localOnly = getTodos().filter(t => !dbIds.has(t.id))
+        const localOnly = isLocalhost ? [] : getTodos().filter(t => !dbIds.has(t.id))
         if (localOnly.length > 0) {
           await Promise.all(localOnly.map(t => upsertTodo(supabase, user!.id, t)))
           toast.success(
@@ -65,13 +65,13 @@ export function useTodos() {
           )
         }
 
-        const localTags = getGlobalTags()
+        const localTags = isLocalhost ? [] : getGlobalTags()
         const mergedTags = Array.from(new Set([...dbTags, ...localTags]))
         if (mergedTags.length > dbTags.length) {
           await dbSaveGlobalTags(supabase, user!.id, mergedTags)
         }
 
-        const localColors = getTagColors()
+        const localColors = isLocalhost ? {} : getTagColors()
         const newColors = Object.entries(localColors).filter(([tag]) => !dbTagColors[tag])
         if (newColors.length > 0) {
           await Promise.all(newColors.map(([tag, color]) => upsertTagColor(supabase, user!.id, tag, color)))
