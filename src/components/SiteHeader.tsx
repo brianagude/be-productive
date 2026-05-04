@@ -102,9 +102,12 @@ export function SiteHeader({ title, remaining, onNewTask, onOpenTimer, user, onA
             <button onClick={() => { handleTimer(); close() }} className={menuRowCls}>
               Timer
             </button>
-            <button onClick={() => { onAccountClick?.(); close() }} className={menuRowCls}>
-              Account {user ? '·' : ''}
-            </button>
+            {process.env.NODE_ENV === 'development' && (
+              <button onClick={() => { onAccountClick?.(); close() }} className={menuRowCls}>
+                Account
+              </button>
+            )}
+            
             <Link href="/stats" className={menuRowCls}>
               Stats
             </Link>

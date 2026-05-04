@@ -333,6 +333,11 @@ interface CloudData {
   byMonth: Array<{ label: string; count: number }>
   byPriority: Array<{ priority: string; count: number }>
   recurringTasks: Array<{ id: string; title: string; scheduledCount: number; completionCount: number; rate: number }>
+  todayCount: number
+  weekCount: number
+  completionsByDay: Record<string, number>
+  completionStreak: number
+  totalCompleted: number
 }
 
 function computeCloud(todos: Todo[], tagColors: Record<string, string>, completions: CompletionRecord[]): CloudData {
@@ -426,7 +431,21 @@ function computeCloud(todos: Todo[], tagColors: Record<string, string>, completi
     .sort((a, b) => b.completionCount - a.completionCount)
     .slice(0, 10)
 
-  return { recentCompletions, allTimeByTag, byDayOfWeek, byMonth, byPriority, recurringTasks }
+  // 7. Today / this week / heatmap / streak
+  const todayStr = dateStr(0)
+  const wStart = weekStart()
+  const completionsByDay: Record<string, number> = {}
+  for (const c of completions) {
+    completionsByDay[c.date] = (completionsByDay[c.date] ?? 0) + 1
+  }
+  const todayCount = completions.filter(c => c.date === todayStr).length
+  const weekCount = completions.filter(c => c.date >= wStart).length
+  const completionStreak = calcStreak(completionsByDay)
+
+  return {
+    recentCompletions, allTimeByTag, byDayOfWeek, byMonth, byPriority, recurringTasks,
+    todayCount, weekCount, completionsByDay, completionStreak, totalCompleted: completions.length,
+  }
 }
 
 // ── Section header ─────────────────────────────────────────────────────────────
@@ -480,11 +499,30 @@ export default function StatsPage() {
     setData(compute(getTodos(), getTagColors(), getAllSessions(), getCompletions()))
   }, [])
 
+  const loadCloudData = useCallback(async () => {
+    if (!user) return
+    const supabase = createClient()
+    try {
+      const [todos, completions, tagColors] = await Promise.all([
+        fetchTodos(supabase, user.id),
+        fetchCompletions(supabase, user.id),
+        fetchTagColors(supabase, user.id),
+      ])
+      setCloudData(computeCloud(todos, tagColors, completions))
+    } catch (err) {
+      console.error('Failed to load cloud stats:', err)
+    }
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
-    const onVisible = () => { if (document.visibilityState === 'visible') loadData() }
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      loadData()
+      loadCloudData()
+    }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [loadData])
+  }, [loadData, loadCloudData])
 
   // Cloud data — DB, loads when user signs in/out
   useEffect(() => {
@@ -493,19 +531,7 @@ export default function StatsPage() {
       setCloudData(null)
       return
     }
-    const supabase = createClient()
-    ;(async () => {
-      try {
-        const [todos, completions, tagColors] = await Promise.all([
-          fetchTodos(supabase, user.id),
-          fetchCompletions(supabase, user.id),
-          fetchTagColors(supabase, user.id),
-        ])
-        setCloudData(computeCloud(todos, tagColors, completions))
-      } catch (err) {
-        console.error('Failed to load cloud stats:', err)
-      }
-    })()
+    loadCloudData()
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!data) return null
@@ -523,19 +549,19 @@ export default function StatsPage() {
           {/* ── Completion heatmap ────────────────────────────────────────── */}
           <SectionHeader label="Tasks completed" />
           <div className="grid grid-cols-2 gap-px bg-border mx-4 rounded-lg overflow-hidden sm:grid-cols-4">
-            <CompletionHeatmap completionsByDay={data.completionsByDay} />
+            <CompletionHeatmap completionsByDay={cloudData?.completionsByDay ?? data.completionsByDay} />
             <div className="bg-background px-4 py-4">
               <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1.5">Today</p>
-              <p className="text-xl font-semibold tabular-nums">{data.todayCompletions.length}</p>
+              <p className="text-xl font-semibold tabular-nums">{cloudData?.todayCount ?? data.todayCompletions.length}</p>
             </div>
             <div className="bg-background px-4 py-4">
               <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1.5">This week</p>
-              <p className="text-xl font-semibold tabular-nums">{data.weekCompletions.length}</p>
+              <p className="text-xl font-semibold tabular-nums">{cloudData?.weekCount ?? data.weekCompletions.length}</p>
             </div>
           </div>
 
 
-          {!data.hasAnyData && data.totalCompleted === 0 ? (
+          {!data.hasAnyData && (cloudData?.totalCompleted ?? data.totalCompleted) === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 gap-2 text-center px-8">
               <p className="text-sm text-muted-foreground">No data yet.</p>
               <p className="text-xs text-muted-foreground/50">
