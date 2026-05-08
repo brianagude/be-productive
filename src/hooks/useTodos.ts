@@ -9,12 +9,14 @@ import {
   addGlobalTag, setTagColor as setTagColorLocal,
   getGlobalTags, getTagColors,
   saveGlobalTags as saveGlobalTagsLocal, saveTagColors,
+  getCompletions, clearCompletions,
 } from '@/lib/storage'
 import { pruneTimeSpent } from '@/lib/pomodoroStorage'
 import { createClient } from '@/lib/supabase/client'
 import {
   fetchTodos, upsertTodo, deleteTodo as dbDeleteTodo,
   addCompletion as dbAddCompletion,
+  fetchCompletions,
   fetchGlobalTags, saveGlobalTags as dbSaveGlobalTags,
   fetchTagColors, upsertTagColor, deleteTagColor,
 } from '@/lib/supabase/db'
@@ -46,10 +48,11 @@ export function useTodos() {
     const supabase = createClient()
     ;(async () => {
       try {
-        const [dbTodos, dbTags, dbTagColors] = await Promise.all([
+        const [dbTodos, dbTags, dbTagColors, dbCompletions] = await Promise.all([
           fetchTodos(supabase, user!.id),
           fetchGlobalTags(supabase, user!.id),
           fetchTagColors(supabase, user!.id),
+          fetchCompletions(supabase, user!.id),
         ])
 
         // Migrate any local-only items to DB (production only — skip on localhost
@@ -83,6 +86,18 @@ export function useTodos() {
         saveGlobalTagsLocal([])
         saveTagColors({})
 
+        // Migrate local completion history to DB. Completions are permanent in the
+        // DB (never purged) so stats remain accurate for logged-in users.
+        const localCompletions = isLocalhost ? [] : getCompletions()
+        if (localCompletions.length > 0) {
+          const dbTimes = new Set(dbCompletions.map(c => c.completedAt))
+          const localOnlyCompletions = localCompletions.filter(c => !dbTimes.has(c.completedAt))
+          if (localOnlyCompletions.length > 0) {
+            await Promise.all(localOnlyCompletions.map(c => dbAddCompletion(supabase, user!.id, c)))
+          }
+        }
+        clearCompletions()
+
         const finalColors = { ...dbTagColors, ...Object.fromEntries(newColors) }
         const allTodos = [...dbTodos, ...localOnly]
         const { todos: cleaned, changed } = runStartupCleanup(allTodos, { skipPurge: true })
@@ -102,6 +117,42 @@ export function useTodos() {
       }
     })()
   }, [user?.id, useCloud])
+
+  // For cloud users already signed in, re-run the daily/weekly reset whenever
+  // the page becomes visible on a new day (the main effect only fires once on sign-in).
+  useEffect(() => {
+    if (!useCloud) return
+
+    const checkDailyReset = () => {
+      if (document.visibilityState !== 'visible') return
+      const today = new Date().toDateString()
+      if (localStorage.getItem('tiny-tools:lastReset') === today) return
+
+      const now = new Date()
+      const todayDow = now.getDay()
+      let changed = false
+      const updated = todosRef.current.map(t => {
+        if (t.status !== 'done' && t.status !== 'cancelled') return t
+        if (t.daily || t.weeklyDays?.includes(todayDow)) {
+          changed = true
+          return { ...t, status: 'todo' as Status, updatedAt: now.toISOString() }
+        }
+        return t
+      })
+      localStorage.setItem('tiny-tools:lastReset', today)
+      if (changed) {
+        const supabase = createClient()
+        const original = new Map(todosRef.current.map(t => [t.id, t]))
+        const resetTodos = updated.filter(t => original.get(t.id)?.status !== t.status)
+        todosRef.current = updated
+        setTodos([...updated])
+        Promise.all(resetTodos.map(t => upsertTodo(supabase, user!.id, t))).catch(console.error)
+      }
+    }
+
+    document.addEventListener('visibilitychange', checkDailyReset)
+    return () => document.removeEventListener('visibilitychange', checkDailyReset)
+  }, [useCloud, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const persist = useCallback((updated: Todo[]) => {
     setTodos(updated)

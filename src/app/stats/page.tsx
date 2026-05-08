@@ -512,7 +512,7 @@ export default function StatsPage() {
     } catch (err) {
       console.error('Failed to load cloud stats:', err)
     }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user])
 
   useEffect(() => {
     const onVisible = () => {
