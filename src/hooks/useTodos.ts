@@ -20,7 +20,6 @@ import {
   fetchGlobalTags, saveGlobalTags as dbSaveGlobalTags,
   fetchTagColors, upsertTagColor, deleteTagColor,
 } from '@/lib/supabase/db'
-import posthog from 'posthog-js'
 import { toast } from 'sonner'
 import { useAuthContext } from '@/contexts/AuthContext'
 
@@ -185,16 +184,7 @@ export function useTodos() {
       createdAt: now,
       updatedAt: now,
     }
-    const category = daily ? 'daily' : weeklyDays.length > 0 ? 'weekly' : backlog ? 'backlog' : 'tasks'
-    posthog.capture('task_created', {
-      category,
-      has_deadline: !!deadline,
-      has_description: !!description,
-      has_tags: tags.length > 0,
-      priority_set: priority !== 'none',
-      tag_count: tags.length,
-      tags,
-    })
+
     persist([...todosRef.current, todo])
     if (useCloud) {
       const supabase = createClient()
@@ -217,11 +207,6 @@ export function useTodos() {
   }, [user, useCloud, persist])
 
   const deleteTodo = useCallback((id: string) => {
-    const todo = todosRef.current.find(t => t.id === id)
-    if (todo) {
-      const category = todo.daily ? 'daily' : (todo.weeklyDays?.length ?? 0) > 0 ? 'weekly' : todo.backlog ? 'backlog' : 'tasks'
-      posthog.capture('task_deleted', { category })
-    }
     persist(todosRef.current.filter(t => t.id !== id))
     if (useCloud) {
       const supabase = createClient()
@@ -243,13 +228,6 @@ export function useTodos() {
           date: now.slice(0, 10),
           completedAt: now,
         }
-        const category = todo.daily ? 'daily' : (todo.weeklyDays?.length ?? 0) > 0 ? 'weekly' : todo.backlog ? 'backlog' : 'tasks'
-        const wasOverdue = !!todo.deadline && new Date(todo.deadline + 'T00:00:00') < new Date(new Date().setHours(0, 0, 0, 0))
-        posthog.capture('task_completed', {
-          category,
-          had_deadline: !!todo.deadline,
-          was_overdue: wasOverdue,
-        })
         if (!useCloud) {
           addCompletionLocal(record)
         } else {

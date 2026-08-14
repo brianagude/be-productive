@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { type User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import posthog from 'posthog-js'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -41,12 +40,6 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
-      if (event === 'SIGNED_IN' && session?.user) {
-        posthog.identify(session.user.id, {
-          email: session.user.email,
-          name: session.user.user_metadata?.name,
-        })
-      }
     })
 
     return () => subscription.unsubscribe()
