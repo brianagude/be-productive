@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Todo, Priority } from '@/lib/types'
 import { useTodos } from '@/hooks/useTodos'
-import { useAuthContext } from '@/contexts/AuthContext'
 import { TagsProvider } from '@/contexts/TagsContext'
 import { usePomodoro } from '@/hooks/usePomodoro'
 import { SiteHeader } from '@/components/SiteHeader'
@@ -13,18 +11,9 @@ import { TodoList } from '@/components/todo/TodoList'
 import { TodoModal, ModalState } from '@/components/todo/TodoModal'
 import { TimerModal } from '@/components/todo/TimerModal'
 import { PomodoroModal } from '@/components/todo/PomodoroModal'
-import { AuthModal } from '@/components/auth/AuthModal'
 
 export default function TodoPage() {
-  const { user } = useAuthContext()
-  const router = useRouter()
   const { todos, globalTags, tagColors, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag, addTag, setTagColor } = useTodos()
-  const [authOpen, setAuthOpen] = useState(false)
-
-  const handleAccountClick = useCallback(() => {
-    if (user) router.push('/account')
-    else setAuthOpen(true)
-  }, [user, router])
   const pomodoro = usePomodoro()
   const [modal, setModal] = useState<ModalState>(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#new') {
@@ -87,8 +76,6 @@ export default function TodoPage() {
         remaining={remaining}
         onNewTask={() => setModal({ mode: 'create' })}
         onOpenTimer={() => setTimerOpen(true)}
-        user={user}
-        onAccountClick={handleAccountClick}
       />
 
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border/50 bg-border/15">
@@ -115,12 +102,7 @@ export default function TodoPage() {
 
       <PomodoroModal pomodoro={pomodoro} todos={todos} />
 
-      <SiteFooter user={user} onAccountClick={handleAccountClick} />
-
-      <AuthModal
-        open={authOpen}
-        onOpenChange={setAuthOpen}
-      />
+      <SiteFooter />
 
       <TodoModal
         state={modal}

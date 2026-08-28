@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next"
 import { Spline_Sans, Spline_Sans_Mono } from "next/font/google";
-import { Providers } from "./providers";
 import "./globals.css";
 
 const splineSans = Spline_Sans({
@@ -55,7 +55,8 @@ export default function RootLayout({
       <body
         className={`${splineSans.variable} ${splineMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        {children}
+        <Analytics />
       </body>
     </html>
   );

@@ -100,7 +100,7 @@ src/
     utils.ts              # cn()
 ```
 
-## Roadmap
+## Data
 
-- **Auth** — user accounts so data follows you across devices
-- **Database** — backend storage to replace localStorage (the app has real users now)
+All data lives in the browser via `localStorage` — tasks, tags, completion history,
+and Pomodoro sessions. There is no backend, account system, or sync.

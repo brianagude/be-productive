@@ -409,7 +409,7 @@ export function TodoModal({ state, onClose, onCreate, onUpdate, onDelete, onCycl
   // Sync tags when parent updates them (e.g. after rename/delete)
   useEffect(() => {
     if (isEdit && todo) setTags(todo.tags)
-  }, [todo?.tags]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [todo?.tags])
 
   const handleField = <K extends keyof Todo>(key: K, value: Todo[K]) => {
     if (key === 'priority') setPriority(value as Priority)

@@ -40,7 +40,6 @@ export function deleteGlobalTag(tag: string): void {
   if (typeof window === 'undefined') return
   saveGlobalTags(getGlobalTags().filter(t => t !== tag))
   const colors = getTagColors()
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { [tag]: _removed, ...rest } = colors
   localStorage.setItem(TAG_COLORS_KEY, JSON.stringify(rest))
 }
@@ -73,8 +72,7 @@ export function getTodos(): Todo[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     const todos = raw ? JSON.parse(raw) : []
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return todos.map((t: any) => ({ tags: [], daily: false, weeklyDays: [], ...t } as Todo))
+    return todos.map((t: Partial<Todo>) => ({ tags: [], daily: false, weeklyDays: [], ...t } as Todo))
   } catch { return [] }
 }
 
@@ -97,11 +95,6 @@ export function addCompletion(record: CompletionRecord): void {
   if (typeof window === 'undefined') return
   const records = getCompletions()
   localStorage.setItem(COMPLETIONS_KEY, JSON.stringify([...records, record]))
-}
-
-export function saveCompletions(records: CompletionRecord[]): void {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(COMPLETIONS_KEY, JSON.stringify(records))
 }
 
 export function clearCompletions(): void {

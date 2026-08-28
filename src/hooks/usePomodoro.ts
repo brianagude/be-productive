@@ -1,5 +1,4 @@
 'use client'
-import posthog from 'posthog-js'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
@@ -126,7 +125,6 @@ export function usePomodoro(): UsePomodoroReturn {
     if (currentPhase === 'work') {
       if (todoId) addTimeSpent(todoId, settingsRef.current.workMins * 60)
       if (ctx) playWorkDone(ctx)
-      posthog.capture('timer_completed')
       sendNotification('Work session complete!', 'Time for a break.')
       const breakSecs = settingsRef.current.breakMins * 60
       endTimeRef.current = Date.now() + breakSecs * 1000
@@ -210,11 +208,6 @@ export function usePomodoro(): UsePomodoroReturn {
 
     const secs = settingsRef.current.workMins * 60
     endTimeRef.current = Date.now() + secs * 1000
-    posthog.capture('timer_started', {
-      work_minutes: settingsRef.current.workMins,
-      break_minutes: settingsRef.current.breakMins,
-      task_selected: !!selectedTodoIdRef.current,
-    })
     setTotalSeconds(secs)
     setSecondsLeft(secs)
     setPhase('work')
