@@ -99,6 +99,11 @@ export function addCompletion(record: CompletionRecord): void {
   localStorage.setItem(COMPLETIONS_KEY, JSON.stringify([...records, record]))
 }
 
+export function saveCompletions(records: CompletionRecord[]): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(COMPLETIONS_KEY, JSON.stringify(records))
+}
+
 export function clearCompletions(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem(COMPLETIONS_KEY)

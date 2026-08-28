@@ -8,20 +8,16 @@ import {
   addCompletion as addCompletionLocal,
   addGlobalTag, setTagColor as setTagColorLocal,
   getGlobalTags, getTagColors,
-  saveGlobalTags as saveGlobalTagsLocal, saveTagColors,
-  getCompletions, clearCompletions,
 } from '@/lib/storage'
 import { pruneTimeSpent } from '@/lib/pomodoroStorage'
 import { createClient } from '@/lib/supabase/client'
 import {
   fetchTodos, upsertTodo, deleteTodo as dbDeleteTodo,
   addCompletion as dbAddCompletion,
-  fetchCompletions,
   fetchGlobalTags, saveGlobalTags as dbSaveGlobalTags,
   fetchTagColors, upsertTagColor, deleteTagColor,
 } from '@/lib/supabase/db'
 import posthog from 'posthog-js'
-import { toast } from 'sonner'
 import { useAuthContext } from '@/contexts/AuthContext'
 
 export function useTodos() {
@@ -48,67 +44,27 @@ export function useTodos() {
     const supabase = createClient()
     ;(async () => {
       try {
-        const [dbTodos, dbTags, dbTagColors, dbCompletions] = await Promise.all([
+        const [dbTodos, dbTags, dbTagColors] = await Promise.all([
           fetchTodos(supabase, user!.id),
           fetchGlobalTags(supabase, user!.id),
           fetchTagColors(supabase, user!.id),
-          fetchCompletions(supabase, user!.id),
         ])
 
-        // Migrate any local-only items to DB (production only — skip on localhost
-        // to avoid polluting the DB with dev/test data).
-        const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-        const dbIds = new Set(dbTodos.map(t => t.id))
-        const localOnly = isLocalhost ? [] : getTodos().filter(t => !dbIds.has(t.id))
-        if (localOnly.length > 0) {
-          await Promise.all(localOnly.map(t => upsertTodo(supabase, user!.id, t)))
-          toast.success(
-            `Imported ${localOnly.length} task${localOnly.length === 1 ? '' : 's'} from this browser`,
-            { duration: 4000 }
-          )
-        }
+        // NOTE: automatic localStorage -> DB migration is intentionally disabled
+        // while the cloud layer is being wound down. Guest data stays in the
+        // browser; it's only moved to the account by explicit user action.
+        // The DB is the source of truth for signed-in users, and components read
+        // from React state (not localStorage), so nothing here touches local data.
 
-        const localTags = isLocalhost ? [] : getGlobalTags()
-        const mergedTags = Array.from(new Set([...dbTags, ...localTags]))
-        if (mergedTags.length > dbTags.length) {
-          await dbSaveGlobalTags(supabase, user!.id, mergedTags)
-        }
-
-        const localColors = isLocalhost ? {} : getTagColors()
-        const newColors = Object.entries(localColors).filter(([tag]) => !dbTagColors[tag])
-        if (newColors.length > 0) {
-          await Promise.all(newColors.map(([tag, color]) => upsertTagColor(supabase, user!.id, tag, color)))
-        }
-
-        // Clear localStorage — DB is now the source of truth. Components read
-        // from React state (not localStorage), so nothing breaks.
-        saveTodos([])
-        saveGlobalTagsLocal([])
-        saveTagColors({})
-
-        // Migrate local completion history to DB. Completions are permanent in the
-        // DB (never purged) so stats remain accurate for logged-in users.
-        const localCompletions = isLocalhost ? [] : getCompletions()
-        if (localCompletions.length > 0) {
-          const dbTimes = new Set(dbCompletions.map(c => c.completedAt))
-          const localOnlyCompletions = localCompletions.filter(c => !dbTimes.has(c.completedAt))
-          if (localOnlyCompletions.length > 0) {
-            await Promise.all(localOnlyCompletions.map(c => dbAddCompletion(supabase, user!.id, c)))
-          }
-        }
-        clearCompletions()
-
-        const finalColors = { ...dbTagColors, ...Object.fromEntries(newColors) }
-        const allTodos = [...dbTodos, ...localOnly]
-        const { todos: cleaned, changed } = runStartupCleanup(allTodos, { skipPurge: true })
+        const { todos: cleaned, changed } = runStartupCleanup(dbTodos, { skipPurge: true })
         pruneTimeSpent(cleaned.map(t => t.id))
         todosRef.current = cleaned
         setTodos(cleaned)
-        setGlobalTags(mergedTags)
-        setTagColors(finalColors)
+        setGlobalTags(dbTags)
+        setTagColors(dbTagColors)
 
         if (changed) {
-          const original = new Map(allTodos.map(t => [t.id, t]))
+          const original = new Map(dbTodos.map(t => [t.id, t]))
           const resetTodos = cleaned.filter(t => original.get(t.id)?.status !== t.status)
           await Promise.all(resetTodos.map(t => upsertTodo(supabase, user!.id, t)))
         }
