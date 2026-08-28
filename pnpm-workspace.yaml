@@ -1,0 +1,10 @@
+# Dependencies allowed to run install/build scripts (pnpm blocks these by
+# default since v10). sharp = Next.js image-optimization native binary;
+# msw = transitive dep of shadcn, harmless setup script.
+# pnpm 11 reads `allowBuilds` (map); older pnpm reads `onlyBuiltDependencies` (list).
+allowBuilds:
+  sharp: true
+  msw: true
+onlyBuiltDependencies:
+  - sharp
+  - msw
