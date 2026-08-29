@@ -1,120 +1,50 @@
 'use client'
 
-import { useState } from 'react'
-import { Todo, Priority } from '@/lib/types'
-import { useTodos } from '@/hooks/useTodos'
-import { TagsProvider } from '@/contexts/TagsContext'
-import { usePomodoro } from '@/hooks/usePomodoro'
-import { SiteHeader } from '@/components/SiteHeader'
-import { SiteFooter } from '@/components/SiteFooter'
-import { TodoList } from '@/components/todo/TodoList'
-import { TodoModal, ModalState } from '@/components/todo/TodoModal'
-import { TimerModal } from '@/components/todo/TimerModal'
-import { PomodoroModal } from '@/components/todo/PomodoroModal'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { CARD_KINDS, CardKind } from '@/lib/types'
+import { useCards } from '@/hooks/useCards'
+import { Card } from '@/components/Card'
+import { MigrationDrawer } from '@/components/MigrationDrawer'
+import { hasLegacyData, readLegacyBuckets, clearLegacyData } from '@/lib/legacyMigration'
 
-export default function TodoPage() {
-  const { todos, globalTags, tagColors, addTodo, updateTodo, deleteTodo, cycleStatus, renameTag, deleteTag, addTag, setTagColor } = useTodos()
-  const pomodoro = usePomodoro()
-  const [modal, setModal] = useState<ModalState>(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#new') {
-      history.replaceState(null, '', '/')
-      return { mode: 'create' }
-    }
-    return { mode: 'closed' }
-  })
-  const [timerOpen, setTimerOpen] = useState(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#timer') {
-      history.replaceState(null, '', '/')
-      return true
-    }
-    return false
-  })
+export default function HomePage() {
+  const { cards, setTaskText, toggleDone, toggleImportant, setCardMeta, importTexts } = useCards()
+  const [migrateOpen, setMigrateOpen] = useState(false)
 
-  const handleTodoClick = (todo: Todo) => setModal({ mode: 'edit', todo })
+  useEffect(() => {
+    const b = readLegacyBuckets()
+    const total = b.today.length + b.daily.length + b.weekly.length
+    if (total > 0) setMigrateOpen(true)
+    else if (hasLegacyData()) clearLegacyData() // stray non-task legacy keys — drop silently
+  }, [])
 
-  const handleCycleStatus = (id: string, status: Todo['status']) => {
-    cycleStatus(id, status)
-    if (modal.mode === 'edit' && modal.todo.id === id) {
-      const cycle = ['todo', 'in-progress', 'done', 'cancelled'] as const
-      const next = cycle[(cycle.indexOf(status) + 1) % cycle.length]
-      setModal({ mode: 'edit', todo: { ...modal.todo, status: next } })
+  const handleToggleDone = (kind: CardKind, i: number) => {
+    const nowDone = toggleDone(kind, i)
+    if (nowDone) {
+      toast('Task completed', {
+        action: { label: 'Undo', onClick: () => toggleDone(kind, i) },
+      })
     }
   }
-
-  const handleCreate = (title: string, fields: Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>>) => {
-    addTodo(title, fields.priority as Priority | undefined, fields.daily ?? false, fields.weeklyDays ?? [], fields.tags ?? [], fields.deadline, fields.description, fields.backlog ?? false)
-  }
-
-  const handleUpdate = (id: string, changes: Partial<Todo>) => {
-    updateTodo(id, changes)
-    if (modal.mode === 'edit' && modal.todo.id === id) {
-      setModal({ mode: 'edit', todo: { ...modal.todo, ...changes } })
-    }
-  }
-
-  const handleRenameTag = (oldName: string, newName: string) => {
-    renameTag(oldName, newName)
-    if (modal.mode === 'edit' && modal.todo.tags.includes(oldName)) {
-      setModal({ mode: 'edit', todo: { ...modal.todo, tags: modal.todo.tags.map(t => t === oldName ? newName : t) } })
-    }
-  }
-
-  const handleDeleteTag = (tagName: string) => {
-    deleteTag(tagName)
-    if (modal.mode === 'edit' && modal.todo.tags.includes(tagName)) {
-      setModal({ mode: 'edit', todo: { ...modal.todo, tags: modal.todo.tags.filter(t => t !== tagName) } })
-    }
-  }
-
-  const remaining = todos.filter(t => t.status !== 'done' && t.status !== 'cancelled' && !t.backlog).length
 
   return (
-    <TagsProvider value={{ globalTags, tagColors, addTag, setTagColor }}>
-    <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-      <SiteHeader
-        title="Things I Need To Do"
-        remaining={remaining}
-        onNewTask={() => setModal({ mode: 'create' })}
-        onOpenTimer={() => setTimerOpen(true)}
-      />
-
-      <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border/50 bg-border/15">
-        <span className="flex-1 text-xs text-muted-foreground/50">Task</span>
-        <span className="text-xs text-muted-foreground/50 shrink-0 pr-1">Tags / Deadline</span>
+    <>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-center">
+        {CARD_KINDS.map(kind => (
+          <Card
+            key={kind}
+            kind={kind}
+            card={cards[kind]}
+            onMeta={patch => setCardMeta(kind, patch)}
+            onText={(i, text) => setTaskText(kind, i, text)}
+            onToggleDone={i => handleToggleDone(kind, i)}
+            onToggleImportant={i => toggleImportant(kind, i)}
+          />
+        ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <TodoList
-          todos={todos}
-          onStatusClick={todo => handleCycleStatus(todo.id, todo.status)}
-          onTodoClick={handleTodoClick}
-          onUpdate={handleUpdate}
-          onNewTask={() => setModal({ mode: 'create' })}
-        />
-      </div>
-
-      <TimerModal
-        open={timerOpen}
-        onClose={() => setTimerOpen(false)}
-        pomodoro={pomodoro}
-        todos={todos.filter(t => t.status !== 'done' && t.status !== 'cancelled' && !t.backlog)}
-      />
-
-      <PomodoroModal pomodoro={pomodoro} todos={todos} />
-
-      <SiteFooter />
-
-      <TodoModal
-        state={modal}
-        onClose={() => setModal({ mode: 'closed' })}
-        onCreate={handleCreate}
-        onUpdate={handleUpdate}
-        onDelete={deleteTodo}
-        onCycleStatus={handleCycleStatus}
-        onRenameTag={handleRenameTag}
-        onDeleteTag={handleDeleteTag}
-      />
-    </div>
-    </TagsProvider>
+      <MigrationDrawer open={migrateOpen} onOpenChange={setMigrateOpen} onImport={importTexts} />
+    </>
   )
 }
