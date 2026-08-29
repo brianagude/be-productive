@@ -1,28 +1,9 @@
-import Link from 'next/link'
-
 export function SiteFooter() {
   return (
-    <footer className="shrink-0 bg-black flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-white/50 font-medium">Be Productive</span>
-      <div className="hidden items-center gap-4 sm:flex">
-        <Link href="/" className="text-sm text-white/50 hover:text-white/60 transition-colors">
-          Tasks
-        </Link>
-        <Link href="/stats" className="text-sm text-white/50 hover:text-white/60 transition-colors">
-          Stats
-        </Link>
-        <Link href="/changelog" className="text-sm text-white/50 hover:text-white/60 transition-colors">
-          Changelog
-        </Link>
-      </div>
-      <a
-        href="https://www.brianagude.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-sm text-white/50 hover:text-white/60 transition-colors"
-      >
-        Built by Bri
-      </a>
+    <footer className="mt-auto p-4">
+      <p className="text-sm">
+        ©{new Date().getFullYear()} <button className="border-none outline-none underline">credits</button>
+      </p>
     </footer>
   )
 }

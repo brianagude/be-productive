@@ -1,0 +1,57 @@
+"use client";
+
+import Link from "next/link";
+import {
+  AccountIcon,
+  ListIcon,
+  HelpIcon,
+  PaintbrushIcon,
+  TimerIcon,
+  YearIcon,
+} from "./Icons";
+
+interface SideBarProps {
+  onOpenTimer: () => void;
+}
+
+export function SideBar({ onOpenTimer }: SideBarProps) {
+  const buttonStyles =
+    "group/button group-hover/sidebar:min-w-28 cursor-pointer disabled:cursor-not-allowed disabled:opacity-15 border-none bg-transperent outline-none flex items-center justify-end gap-2 transition-all";
+  const spanStyles =
+    "hidden group-hover/sidebar:flex group-hover/button:font-semibold transition-all";
+
+  return (
+    <section className="group/sidebar absolute top-0 right-0 h-auto z-20 w-fit cursor-pointer">
+      <div className="p-4 flex flex-col gap-10 md:p-6">
+        <div className="flex flex-col gap-3">
+          <Link href="/" className={buttonStyles}>
+            <span className={spanStyles}>List View</span>
+            <ListIcon />
+          </Link>
+          <Link href="/year" className={buttonStyles}>
+            <span className={spanStyles}>Year View</span>
+            <YearIcon />
+          </Link>
+          <button type="button" className={buttonStyles} onClick={onOpenTimer}>
+            <span className={spanStyles}>Timer</span>
+            <TimerIcon />
+          </button>
+        </div>
+        <div className="flex flex-col gap-3">
+          <button type="button" className={buttonStyles} disabled>
+            {/* <span className={spanStyles}>Account</span> */}
+            <AccountIcon />
+          </button>
+          <button type="button" className={buttonStyles} disabled>
+            {/* <span className={spanStyles}>Theme</span> */}
+            <PaintbrushIcon />
+          </button>
+          <button type="button" className={buttonStyles} disabled>
+            {/* <span className={spanStyles}>Help</span> */}
+            <HelpIcon />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
