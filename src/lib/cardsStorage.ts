@@ -7,9 +7,9 @@ const RESETS_KEY = 'bp:resets'
 const RESET_HOUR = 3
 
 const DEFAULT_META: Record<CardKind, { title: string; description: string }> = {
-  today: { title: 'TO DO', description: 'Due today' },
-  daily: { title: 'TO DO', description: 'Due daily' },
-  weekly: { title: 'TO DO', description: 'Due this week' },
+  today: { title: 'TO DO', description: 'Items due today' },
+  daily: { title: 'TO DO', description: 'Items due daily' },
+  weekly: { title: 'TO DO', description: 'Items due this week' },
 }
 
 // ── Factories ─────────────────────────────────────────────────────────────────

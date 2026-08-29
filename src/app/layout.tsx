@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
-import { Kalam, Special_Elite } from "next/font/google";
+import { Kalam } from "next/font/google";
 import { Toaster } from "sonner";
 import { Wrapper } from "@/components/Wrapper";
 import "./globals.css";
@@ -89,12 +89,6 @@ const kalam = Kalam({
   weight: ["300", "400", "700"],
 });
 
-const specialElite = Special_Elite({
-  variable: "--font-special-elite",
-  subsets: ["latin"],
-  weight: "400",
-});
-
 const siteUrl = "https://be-productive.brianagude.com";
 
 export const metadata: Metadata = {
@@ -134,7 +128,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${cooperHewitt.className} ${kalam.variable} ${specialElite.variable} antialiased`}>
+      <body className={`${cooperHewitt.variable} ${kalam.variable} antialiased relative`}>
+        {/* <div className='overlay fixed inset-0 pointer-events-none z-100' /> */}
         <Wrapper>{children}</Wrapper>
         <Toaster position="bottom-right" />
         <Analytics />

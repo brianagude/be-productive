@@ -14,9 +14,7 @@
 }
 
 @theme {
-  --font-sans: var(--font-cooper-hewitt), system-ui, sans-serif;
-  --font-accent: var(--font-special-elite), "Courier New", monospace;
-  --font-note: var(--font-kalam), cursive;
+  --color-error: #ef0101;
 
   --color-ink-0: hsl(var(--gray-h) var(--gray-s) 0%); /* Black */
   --color-ink-10: hsl(var(--gray-h) var(--gray-s) 10%);
@@ -52,6 +50,11 @@
   --color-icon-base: var(--color-ink-100);
 }
 
+@theme inline {
+  --font-sans: var(--font-cooper-hewitt), system-ui, sans-serif;
+  --font-accent: var(--font-kalam), cursive;
+}
+
 body {
   background: var(--color-ink-95);
   font-weight: 400;
@@ -60,5 +63,11 @@ body {
   line-height: 150%;
   color: var(--color-ink-0);
 }
+
+/* .overlay {
+  background-image: url('/overlay.png');
+  background-repeat: repeat;
+  background-position: 0 0;
+} */
 
 
