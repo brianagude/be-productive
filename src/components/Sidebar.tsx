@@ -3,26 +3,37 @@
 import Link from "next/link";
 import {
   AccountIcon,
+  FanIcon,
   ListIcon,
   HelpIcon,
   PaintbrushIcon,
   TimerIcon,
   YearIcon,
 } from "./Icons";
+import { useDeckControl } from "./deckControl";
 
 interface SideBarProps {
   onOpenTimer: () => void;
 }
 
 export function SideBar({ onOpenTimer }: SideBarProps) {
+  const deck = useDeckControl();
   const buttonStyles =
     "group/button group-hover/sidebar:min-w-28 cursor-pointer disabled:cursor-not-allowed disabled:opacity-15 border-none bg-transperent outline-none flex items-center justify-end gap-2 transition-all";
   const spanStyles =
     "hidden group-hover/sidebar:flex group-hover/button:font-semibold transition-all";
 
   return (
-    <section className="group/sidebar absolute top-0 right-0 h-auto z-20 w-fit cursor-pointer">
+    <section className="group/sidebar fixed top-0 right-0 h-auto w-fit cursor-pointer z-50">
       <div className="p-4 flex flex-col gap-10 md:p-6">
+        <div className="flex flex-col gap-3">
+          {deck.available && (
+            <button type="button" className={buttonStyles} onClick={deck.toggle}>
+              <span className={spanStyles}>{deck.spread ? "Stack" : "Spread"}</span>
+              <FanIcon />
+            </button>
+          )}
+        </div>
         <div className="flex flex-col gap-3">
           <Link href="/" className={buttonStyles}>
             <span className={spanStyles}>List View</span>

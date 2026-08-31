@@ -42,7 +42,7 @@ export function Card({ kind, card, onMeta, onText, onToggleDone, onToggleImporta
   }
 
   return (
-    <section className={`${kind == 'daily' ? 'rotate-1' : kind == 'weekly' ? '-rotate-2' : null} bg-ink-100 shadow-[1px_0_3px_0_rgba(0,0,0,0.10)] w-full max-w-120`}>
+    <section className="bg-ink-100 shadow-[1px_0_3px_0_rgba(0,0,0,0.10)] w-full max-w-120">
       <div className="border-b border-ink-0">
         <div className="pt-8 pb-6 px-4 relative">
           {/* <Image src={stamps[kind]} width={113} height={40} alt="" className="absolute top-8 right-4" /> */}

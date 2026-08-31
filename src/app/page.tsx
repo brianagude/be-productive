@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { CARD_KINDS, CardKind } from '@/lib/types'
 import { useCards } from '@/hooks/useCards'
 import { Card } from '@/components/Card'
+import { CardDeck } from '@/components/CardDeck'
 import { MigrationDrawer } from '@/components/MigrationDrawer'
 import { hasLegacyData, readLegacyBuckets, clearLegacyData } from '@/lib/legacyMigration'
 
@@ -30,19 +31,21 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-center">
-        {CARD_KINDS.map(kind => (
-          <Card
-            key={kind}
-            kind={kind}
-            card={cards[kind]}
-            onMeta={patch => setCardMeta(kind, patch)}
-            onText={(i, text) => setTaskText(kind, i, text)}
-            onToggleDone={i => handleToggleDone(kind, i)}
-            onToggleImportant={i => toggleImportant(kind, i)}
-          />
-        ))}
-      </div>
+      <CardDeck
+        items={CARD_KINDS.map(kind => ({
+          key: kind,
+          content: (
+            <Card
+              kind={kind}
+              card={cards[kind]}
+              onMeta={patch => setCardMeta(kind, patch)}
+              onText={(i, text) => setTaskText(kind, i, text)}
+              onToggleDone={i => handleToggleDone(kind, i)}
+              onToggleImportant={i => toggleImportant(kind, i)}
+            />
+          ),
+        }))}
+      />
 
       <MigrationDrawer open={migrateOpen} onOpenChange={setMigrateOpen} onImport={importTexts} />
     </>
