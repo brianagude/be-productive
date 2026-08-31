@@ -24,7 +24,7 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
     "hidden group-hover/sidebar:flex group-hover/button:font-semibold transition-all";
 
   return (
-    <section className="group/sidebar fixed top-0 right-0 h-auto w-fit cursor-pointer z-50">
+    <section className="group/sidebar absolute top-0 right-0 h-auto w-fit cursor-pointer z-50">
       <div className="p-4 flex flex-col gap-10 md:p-6">
         <div className="flex flex-col gap-3">
           {deck.available && (
