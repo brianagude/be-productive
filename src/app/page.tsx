@@ -10,6 +10,8 @@ import { hasLegacyData, readLegacyTasks, clearLegacyData } from '@/lib/legacyMig
 export default function HomePage() {
   const {
     cards,
+    activeId,
+    setActiveId,
     setTaskText,
     toggleDone,
     toggleImportant,
@@ -28,6 +30,8 @@ export default function HomePage() {
   return (
     <>
       <CardDeck
+        activeId={activeId}
+        onActiveChange={setActiveId}
         onAddCard={addCard}
         onDeleteCard={deleteCard}
         items={cards.map(card => ({

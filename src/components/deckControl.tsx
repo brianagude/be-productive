@@ -8,21 +8,30 @@ interface DeckActions {
   remove: () => void
 }
 
+interface DeckReport {
+  spread?: boolean
+  count?: number
+  mounted?: boolean
+  fanCapable?: boolean
+}
+
 interface DeckControl {
-  /** true = the deck is fanned open */
+  /** true = the deck is showing the fanned-out spread */
   spread: boolean
-  /** true = a fan-mode deck is mounted (list page, desktop + mouse) */
+  /** true = a CardDeck is mounted (the home list view) */
   available: boolean
-  /** New allowed: on the stacked list view */
+  /** New allowed: whenever the deck is mounted */
   canAdd: boolean
-  /** Delete allowed: stacked list view with more than one card */
+  /** Delete allowed: deck mounted with more than one card */
   canRemove: boolean
+  /** Fan toggle allowed: wide viewport + real pointer */
+  canToggle: boolean
   toggle: () => void
   add: () => void
   remove: () => void
   // CardDeck internals:
   bind: (actions: DeckActions | null) => void
-  report: (patch: { spread?: boolean; count?: number }) => void
+  report: (patch: DeckReport) => void
 }
 
 const Ctx = createContext<DeckControl | null>(null)
@@ -30,16 +39,18 @@ const Ctx = createContext<DeckControl | null>(null)
 export function DeckControlProvider({ children }: { children: React.ReactNode }) {
   const [spread, setSpread] = useState(false)
   const [count, setCount] = useState(0)
-  const [available, setAvailable] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [fanCapable, setFanCapable] = useState(false)
   const actions = useRef<DeckActions | null>(null)
 
   const bind = useCallback((a: DeckActions | null) => {
     actions.current = a
-    setAvailable(!!a)
   }, [])
-  const report = useCallback((patch: { spread?: boolean; count?: number }) => {
+  const report = useCallback((patch: DeckReport) => {
     if (patch.spread !== undefined) setSpread(patch.spread)
     if (patch.count !== undefined) setCount(patch.count)
+    if (patch.mounted !== undefined) setMounted(patch.mounted)
+    if (patch.fanCapable !== undefined) setFanCapable(patch.fanCapable)
   }, [])
 
   const toggle = useCallback(() => actions.current?.toggle(), [])
@@ -49,16 +60,17 @@ export function DeckControlProvider({ children }: { children: React.ReactNode })
   const value = useMemo<DeckControl>(
     () => ({
       spread,
-      available,
-      canAdd: available && !spread,
-      canRemove: available && !spread && count > 0,
+      available: mounted,
+      canAdd: mounted,
+      canRemove: mounted && count > 1,
+      canToggle: mounted && fanCapable,
       toggle,
       add,
       remove,
       bind,
       report,
     }),
-    [spread, available, count, toggle, add, remove, bind, report],
+    [spread, mounted, fanCapable, count, toggle, add, remove, bind, report],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

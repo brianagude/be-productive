@@ -14,7 +14,7 @@ interface CardProps {
 
 export function Card({ card, onMeta, onText, onToggleDone, onToggleImportant }: CardProps) {
   return (
-    <section className="bg-ink-100 shadow-[1px_0_3px_0_rgba(0,0,0,0.10)] w-full max-w-120">
+    <section className="bg-ink-100 shadow-[1px_0_3px_0_rgba(0,0,0,0.10)] w-full max-w-112">
       <div className="border-b border-ink-0">
         <div className="pt-8 pb-6 px-4 relative">
           <input

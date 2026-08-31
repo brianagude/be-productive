@@ -1,6 +1,7 @@
 import { CardsState, CardState, Task, SLOTS, SMILEYS } from './types'
 
 const CARDS_KEY = 'bp:cards'
+const ACTIVE_KEY = 'bp:cards:active'
 
 // ── Factories ────────────────────────────────────────────────────────────────
 
@@ -98,4 +99,26 @@ export function getCards(): CardsState {
 export function saveCards(cards: CardsState): void {
   if (typeof window === 'undefined') return
   localStorage.setItem(CARDS_KEY, JSON.stringify(cards))
+}
+
+// ── Active card ──────────────────────────────────────────────────────────────
+// The last card the user was looking at, so the deck reopens where they left off.
+
+export function getActiveId(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem(ACTIVE_KEY) || null
+  } catch {
+    return null
+  }
+}
+
+export function saveActiveId(id: string | null): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (id) localStorage.setItem(ACTIVE_KEY, id)
+    else localStorage.removeItem(ACTIVE_KEY)
+  } catch {
+    /* ignore */
+  }
 }

@@ -13,19 +13,24 @@ export interface DeckItem {
   content: ReactNode
 }
 
-/* ─── Fan tuning (desktop + mouse) ─────────────────────────────────────────
- *   GAP        — px of scroll that moves the fan by one card
- *   FAN_SPREAD — px between adjacent cards once fanned open
- *   FAN_DROP   — px a card sinks per step² off centre (the arc)
- *   FAN_TILT   — degrees a card leans per step off centre
- *   ROW_SCALE  — how much the cards shrink once fanned (1 = no shrink)
- *   REACH_BY_WIDTH — how many cards show each side of centre, by viewport width
- *   STACK_PEEK — px vertical offset per card deeper in the stack
+/* ─── Tuning ───────────────────────────────────────────────────────────────
+ *   GAP         — px of drag / scroll that moves the deck by one card
+ *   STACK_SHIFT — px a card slides aside per step off the front
+ *   STACK_LIFT  — px a card lifts up per step deeper in the stack
+ *   STACK_TILT  — deg a card leans per step off the front
+ *   FAN_SPREAD  — px between adjacent cards once spread wide
+ *   FAN_DROP    — px a card sinks per step² off centre (the arc)
+ *   FAN_TILT    — deg a card leans per step off centre when spread
+ *   ROW_SCALE   — how much cards shrink once spread
+ *   REACH_BY_WIDTH — how many cards show each side of centre, spread, by width
  *   THROW / SNAP / SNAP_EASE — drag momentum + settle feel
- *   OVERSCROLL — how far (in cards) you can pull past the ends before it springs
- *   SLIDE      — carousel: % of card width a neighbour sits off-centre
+ *   OVERSCROLL  — how far (in cards) you can pull past the ends before it springs
+ *   SLIDE       — carousel: % of card width a neighbour sits off-centre
  * ─────────────────────────────────────────────────────────────────────────── */
-const GAP = 360
+const GAP = 340
+const STACK_SHIFT = 13
+const STACK_LIFT = -5
+const STACK_TILT = 1.3
 const FAN_SPREAD = 470
 const FAN_DROP = 16
 const FAN_TILT = 4
@@ -35,7 +40,6 @@ const REACH_BY_WIDTH: Array<{ min: number; reach: number }> = [
   { min: 1440, reach: 2 },
 ]
 const DEFAULT_REACH = 1
-const STACK_PEEK = -10
 const THROW = 0.2
 const SNAP = 0.9
 const SNAP_EASE = 'power2.out'
@@ -77,20 +81,24 @@ const rubber = (v: number, min: number, max: number) => {
   return v
 }
 
-/** Stacked deck: card at depth d (0 = the current/front card). */
-const stackPos = (d: number) => ({
-  x: 0,
-  xPercent: 0,
-  y: d * STACK_PEEK,
-  rotation: d === 0 ? 0 : d % 2 ? 1.6 : -2,
-  scale: 1 - Math.min(d, 4) * 0.03,
-  opacity: d > 4 ? 0 : 1,
-  zIndex: 1000 - d,
-  transformOrigin: '50% 100%',
-  pointerEvents: (d === 0 ? 'auto' : 'none') as 'auto' | 'none',
-})
+/** Tight deck: card at signed offset rel from the front (active) card. */
+const stackPos = (rel: number) => {
+  const a = Math.abs(rel)
+  const d = Math.min(a, 4)
+  return {
+    x: gsap.utils.clamp(-60, 60, rel * STACK_SHIFT),
+    xPercent: 0,
+    y: d * STACK_LIFT,
+    rotation: gsap.utils.clamp(-4, 4, rel * STACK_TILT),
+    scale: 1 - d * 0.02,
+    opacity: gsap.utils.clamp(0, 1, 4 - a),
+    zIndex: Math.round(1000 - a * 4),
+    transformOrigin: '50% 100%',
+    pointerEvents: (a < 0.5 ? 'auto' : 'none') as 'auto' | 'none',
+  }
+}
 
-/** Fanned arc: card at offset rel from the centred (active) card. */
+/** Spread arc: card at offset rel from the centred (active) card. */
 const rowPos = (rel: number, reach: number) => {
   const a = Math.abs(rel)
   return {
@@ -121,26 +129,42 @@ const carouselPos = (rel: number) => ({
 
 interface CardDeckProps {
   items: DeckItem[]
+  activeId?: string | null
+  onActiveChange?: (id: string) => void
   onAddCard?: () => void
   onDeleteCard?: (id: string) => void
 }
 
-export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
+export function CardDeck({
+  items,
+  activeId,
+  onActiveChange,
+  onAddCard,
+  onDeleteCard,
+}: CardDeckProps) {
   const scope = useRef<HTMLDivElement>(null)
   const nodes = useRef(new Map<string, HTMLDivElement>())
   const obsRef = useRef<Observer | null>(null)
   const busy = useRef(false)
   const [mode, setMode] = useState<Mode>('carousel')
   const [reach, setReach] = useState(DEFAULT_REACH)
+  const [idx, setIdx] = useState(0)
   const deck = useDeckControl()
   // where the deck is, in card units. Stable object so GSAP can tween it.
   const view = useRef({ pos: 0, expanded: false })
 
   const n = items.length
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+  const activeIdRef = useRef(activeId)
+  activeIdRef.current = activeId
+
   const el = (i: number) => nodes.current.get(items[i].key)!
-  const allEls = () => items.map((_, i) => el(i))
+  const has = (i: number) => !!items[i] && nodes.current.has(items[i].key)
   const maxH = () => {
-    const els = allEls()
+    const els = items
+      .map((_, i) => nodes.current.get(items[i].key))
+      .filter(Boolean) as HTMLDivElement[]
     return els.length ? Math.max(...els.map(e => e.offsetHeight)) : 0
   }
 
@@ -148,10 +172,22 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const dur = (x: number) => (reduced() ? 0 : x)
-  const clampPos = (p: number) => gsap.utils.clamp(0, n - 1, p)
-  const curIndex = () => norm(Math.round(view.current.pos), n)
+  const clampPos = (p: number) => gsap.utils.clamp(0, Math.max(0, n - 1), p)
+  const curIndex = () => (n ? norm(Math.round(view.current.pos), n) : 0)
+  const indexOfActive = () => {
+    const i = items.findIndex(it => it.key === activeIdRef.current)
+    return i < 0 ? Math.max(0, n - 1) : i
+  }
   const fanHeight = (h: number, exp: boolean) =>
-    exp ? h + 70 + FAN_DROP * (reach + 0.5) ** 2 : h + 40
+    exp ? h + 70 + FAN_DROP * (reach + 0.5) ** 2 : h + 44
+
+  /** the deck has come to rest on a card — remember it + announce it */
+  const settled = () => {
+    const i = curIndex()
+    setIdx(i)
+    const key = itemsRef.current[i]?.key
+    if (key && key !== activeIdRef.current) onActiveChange?.(key)
+  }
 
   // keep mode + reach in step with viewport width / pointer type
   useEffect(() => {
@@ -169,18 +205,30 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
     return () => mqs.forEach(mq => mq.removeEventListener('change', sync))
   }, [])
 
+  // tell the sidebar what the deck can do
+  useEffect(() => {
+    deck.report({ mounted: true })
+    return () => deck.report({ mounted: false })
+  }, [deck.report])
+  useEffect(() => {
+    deck.report({ fanCapable: mode === 'fan' })
+  }, [mode, deck.report])
+  useEffect(() => {
+    deck.report({ count: n })
+  }, [n, deck.report])
+
   const place = (animate: boolean) => {
     if (!items.length) return
     const pos = view.current.pos
     const exp = view.current.expanded
-    const top = curIndex()
     items.forEach((_, i) => {
+      if (!has(i)) return
       const vars =
         mode === 'carousel'
           ? carouselPos(wrapRel(i - pos, n))
           : exp
             ? rowPos(i - pos, reach)
-            : stackPos(norm(i - top, n))
+            : stackPos(i - pos)
       if (animate) {
         gsap.to(el(i), { ...vars, duration: dur(0.45), ease: 'power3.inOut', overwrite: 'auto' })
       } else {
@@ -189,25 +237,29 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
     })
   }
 
-  const glideTo = (target: number, d = 0.6, ease = 'power3.out') => {
+  const glideTo = (target: number, d = 0.55, ease = 'power3.out') => {
+    const t = clampPos(target)
     gsap.to(view.current, {
-      pos: clampPos(target),
+      pos: t,
       duration: dur(d),
       ease,
       overwrite: true,
       onUpdate: () => place(false),
+      onComplete: () => {
+        view.current.pos = t
+        place(false)
+        settled()
+      },
     })
   }
 
-  /** fan: bring card i to the centre */
-  const goto = (i: number) => {
-    if (mode !== 'fan' || !view.current.expanded) return
-    glideTo(i)
-  }
-
-  /** carousel: step one card, wrapping then renormalising pos */
+  /** step one card — carousel buttons, or keyboard in either mode */
   const step = (delta: number) => {
-    if (mode !== 'carousel' || busy.current) return
+    if (!n || busy.current) return
+    if (mode === 'fan') {
+      glideTo(Math.round(view.current.pos) + delta)
+      return
+    }
     busy.current = true
     const target = Math.round(view.current.pos) + delta
     gsap.to(view.current, {
@@ -219,9 +271,16 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
       onComplete: () => {
         view.current.pos = curIndex()
         place(false)
+        settled()
         busy.current = false
       },
     })
+  }
+
+  /** fan: bring card i to the front */
+  const goto = (i: number) => {
+    if (mode !== 'fan') return
+    glideTo(i)
   }
 
   const toggle = () => {
@@ -236,44 +295,46 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
       ease: 'power3.inOut',
     })
     place(true)
-    if (obsRef.current) exp ? obsRef.current.enable() : obsRef.current.disable()
   }
 
-  // expose deck actions to the sidebar (fan mode only)
+  // sidebar action bridge — keep latest closures without re-binding
   const actionsRef = useRef({ toggle: () => {}, add: () => {}, remove: () => {} })
   actionsRef.current = {
     toggle,
-    add: () => {
-      view.current.pos = n // land on the freshly-added card once it's in
-      onAddCard?.()
-    },
+    add: () => onAddCard?.(),
     remove: () => {
-      const id = items[curIndex()]?.key
+      const id = itemsRef.current[curIndex()]?.key
       if (id) onDeleteCard?.(id)
     },
   }
   useEffect(() => {
-    deck.bind(
-      mode === 'fan'
-        ? {
-            toggle: () => actionsRef.current.toggle(),
-            add: () => actionsRef.current.add(),
-            remove: () => actionsRef.current.remove(),
-          }
-        : null,
-    )
+    deck.bind({
+      toggle: () => actionsRef.current.toggle(),
+      add: () => actionsRef.current.add(),
+      remove: () => actionsRef.current.remove(),
+    })
     return () => deck.bind(null)
-  }, [mode, deck.bind])
+  }, [deck.bind])
 
+  // restore / external sync — jump to the active card without animating
   useEffect(() => {
-    deck.report({ count: n })
-  }, [n, deck.report])
+    if (!n) return
+    const target = indexOfActive()
+    if (target !== curIndex()) {
+      gsap.killTweensOf(view.current)
+      view.current.pos = target
+      place(false)
+    }
+    setIdx(target)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, n])
 
   useGSAP(
     () => {
       // clean slate whenever mode / reach / card count changes
       view.current.expanded = false
-      view.current.pos = gsap.utils.clamp(0, Math.max(0, n - 1), Math.round(view.current.pos))
+      view.current.pos = clampPos(indexOfActive())
+      setIdx(curIndex())
       deck.report({ spread: false })
 
       const h = maxH()
@@ -291,15 +352,18 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
       let glide: gsap.core.Tween | null = null
 
       const settle = () => {
-        if (!view.current.expanded) return
         const target = clampPos(Math.round(view.current.pos))
-        if (Math.abs(target - view.current.pos) < 0.001) return
+        if (Math.abs(target - view.current.pos) < 0.001) {
+          settled()
+          return
+        }
         glide = gsap.to(view.current, {
           pos: target,
           duration: dur(SNAP),
           ease: SNAP_EASE,
           overwrite: true,
           onUpdate: () => place(false),
+          onComplete: settled,
         })
       }
 
@@ -328,13 +392,13 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
             ease: SNAP_EASE,
             overwrite: true,
             onUpdate: () => place(false),
+            onComplete: settled,
           })
         },
         onStop: () => {
           if (!glide?.isActive()) settle()
         },
       })
-      obs.disable()
       obsRef.current = obs
 
       return () => {
@@ -346,23 +410,54 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
     { scope, dependencies: [mode, reach, n], revertOnUpdate: true },
   )
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return // don't hijack caret keys inside a card's inputs
+    let hit = true
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+      case 'PageDown':
+        step(1)
+        break
+      case 'ArrowLeft':
+      case 'ArrowUp':
+      case 'PageUp':
+        step(-1)
+        break
+      case 'Home':
+        mode === 'fan' ? glideTo(0) : step(-n)
+        break
+      case 'End':
+        mode === 'fan' ? glideTo(n - 1) : step(n)
+        break
+      default:
+        hit = false
+    }
+    if (hit) e.preventDefault()
+  }
+
   const btn =
     'border border-ink-0 bg-ink-100 px-4 py-2 text-sm font-semibold uppercase shadow-[1px_1px_0_0_rgba(0,0,0,0.15)] transition-transform active:translate-y-px'
 
   const cardCls =
     mode === 'fan'
-      ? 'absolute left-1/2 top-10 -ml-[240px] w-[480px] cursor-pointer'
+      ? 'absolute left-1/2 top-10 -ml-[224px] w-[448px] cursor-pointer'
       : 'absolute inset-x-0 top-3'
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
       <div
         ref={scope}
-        className={
+        role="group"
+        aria-roledescription="card deck"
+        aria-label={`Task lists, ${n} total`}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+        className={`${
           mode === 'fan'
             ? 'relative mx-auto w-full'
-            : 'relative mx-auto w-[min(440px,92vw)] overflow-hidden'
-        }
+            : 'relative mx-auto w-[min(412px,92vw)] overflow-hidden'
+        } outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink-0`}
       >
         {items.map((item, i) => (
           <div
@@ -379,16 +474,32 @@ export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
         ))}
       </div>
 
-      {mode === 'carousel' && (
-        <div className="flex items-center gap-2">
+      {mode === 'carousel' ? (
+        <div className="flex items-center gap-3">
           <button type="button" onClick={() => step(-1)} className={btn}>
             Prev
           </button>
+          <span className="min-w-[3.5rem] text-center text-sm font-semibold tabular-nums">
+            {idx + 1} / {n}
+          </span>
           <button type="button" onClick={() => step(1)} className={btn}>
             Next
           </button>
         </div>
+      ) : (
+        // fan mode drives by drag / scroll / keyboard — keep buttons for AT users
+        <div className="sr-only">
+          <button type="button" onClick={() => step(-1)} disabled={idx <= 0}>
+            Previous list
+          </button>
+          <button type="button" onClick={() => step(1)} disabled={idx >= n - 1}>
+            Next list
+          </button>
+        </div>
       )}
+      <p className="sr-only" aria-live="polite">
+        {n ? `List ${idx + 1} of ${n}` : ''}
+      </p>
     </div>
   )
 }

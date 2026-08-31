@@ -18,19 +18,17 @@ export function Wrapper({ children }: { children: React.ReactNode }) {
   return (
     <DeckControlProvider>
       <main
-        className={`relative flex w-full flex-col ${
-          isDeck ? 'min-h-svh lg:h-svh lg:overflow-hidden' : 'min-h-screen'
-        }`}
+        className={`relative flex w-full flex-col ${isDeck ? 'min-h-svh lg:h-svh lg:overflow-hidden' : 'min-h-screen'
+          }`}
       >
         <div
-          className={`w-full p-4 sm:p-6 md:px-32 ${
-            isDeck ? 'isolate flex min-h-0 flex-1 flex-col items-center justify-center lg:pb-16' : ''
-          }`}
+          className={`w-full px-4 pb-4 pt-14 sm:px-6 sm:pb-6 md:pt-6 md:px-32 ${isDeck ? 'isolate flex min-h-0 flex-1 flex-col items-center justify-center lg:pb-16' : ''
+            }`}
         >
           {children}
         </div>
         <SideBar onOpenTimer={() => setTimerOpen(true)} />
-        <SiteFooter />
+        {/* <SiteFooter /> */}
         <TimerDrawer open={timerOpen} onOpenChange={setTimerOpen} pomodoro={pomodoro} />
       </main>
     </DeckControlProvider>

@@ -609,6 +609,31 @@ export function FanIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function MenuIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+    >
+      <title>Menu Icon</title>
+      <g
+        stroke="var(--color-icon-stroke)"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3.42871 6H20.5716" />
+        <path d="M3.42871 12H20.5716" />
+        <path d="M3.42871 18H20.5716" />
+      </g>
+    </svg>
+  );
+}
+
 export function TrashIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

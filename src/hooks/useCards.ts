@@ -2,18 +2,49 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CardState, Task } from '@/lib/types'
-import { getCards, saveCards, newCard } from '@/lib/cardsStorage'
+import { getCards, saveCards, newCard, getActiveId, saveActiveId } from '@/lib/cardsStorage'
 import { pushCompletion, popCompletionForToday } from '@/lib/completionsStorage'
+
+/** Pick a sensible active id: the stored one if it still exists, else the last card. */
+function resolveActiveId(list: CardState[], preferred: string | null): string | null {
+  if (!list.length) return null
+  if (preferred && list.some(c => c.id === preferred)) return preferred
+  return list[list.length - 1].id
+}
 
 export function useCards() {
   const [cards, setCards] = useState<CardState[]>([])
+  const [activeId, setActiveIdState] = useState<string | null>(null)
   const ref = useRef<CardState[]>(cards)
+  const activeRef = useRef<string | null>(null)
 
-  const persist = useCallback((next: CardState[]) => {
-    ref.current = next
-    setCards(next)
-    saveCards(next)
+  const persistActive = useCallback((id: string | null) => {
+    activeRef.current = id
+    setActiveIdState(id)
+    saveActiveId(id)
   }, [])
+
+  const persist = useCallback(
+    (next: CardState[]) => {
+      ref.current = next
+      setCards(next)
+      saveCards(next)
+      // keep the active pointer valid as cards come and go
+      const resolved = resolveActiveId(next, activeRef.current)
+      if (resolved !== activeRef.current) persistActive(resolved)
+    },
+    [persistActive],
+  )
+
+  /** Move the deck's "current" card. No-op if it isn't a real card. */
+  const setActiveId = useCallback(
+    (id: string | null) => {
+      if (id === activeRef.current) return
+      if (id && !ref.current.some(c => c.id === id)) return
+      persistActive(id)
+    },
+    [persistActive],
+  )
 
   // Load from storage on mount and on tab refocus (client-only).
   useEffect(() => {
@@ -22,15 +53,22 @@ export function useCards() {
     setCards(loaded)
     saveCards(loaded)
 
+    const resolved = resolveActiveId(loaded, getActiveId())
+    activeRef.current = resolved
+    setActiveIdState(resolved)
+    saveActiveId(resolved)
+
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return
       const fresh = getCards()
       ref.current = fresh
       setCards(fresh)
+      const next = resolveActiveId(fresh, activeRef.current)
+      if (next !== activeRef.current) persistActive(next)
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [])
+  }, [persistActive])
 
   const patchCard = useCallback(
     (id: string, fn: (c: CardState) => CardState) => {
@@ -81,10 +119,13 @@ export function useCards() {
     [patchCard],
   )
 
-  /** New card, appended to the end of the list. */
-  const addCard = useCallback(() => {
-    persist([...ref.current, newCard()])
-  }, [persist])
+  /** New card, appended to the end of the list. Becomes the active card. */
+  const addCard = useCallback((): string => {
+    const card = newCard()
+    persist([...ref.current, card])
+    persistActive(card.id)
+    return card.id
+  }, [persist, persistActive])
 
   /** One-shot import: append a new card seeded with the given task texts. */
   const importTasks = useCallback(
@@ -94,8 +135,9 @@ export function useCards() {
       card.tasks = card.tasks.map((t, i) => (texts[i] ? { ...t, text: texts[i] } : t))
       card.title = 'IMPORTED'
       persist([...ref.current, card])
+      persistActive(card.id)
     },
-    [persist],
+    [persist, persistActive],
   )
 
   /** Remove a card from the list. */
@@ -108,6 +150,8 @@ export function useCards() {
 
   return {
     cards,
+    activeId,
+    setActiveId,
     setTaskText,
     toggleDone,
     toggleImportant,

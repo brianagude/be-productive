@@ -56,7 +56,7 @@ export default function YearPage() {
     <>
       <h1 className="mb-10 text-xl font-semibold text-center">{year}</h1>
 
-      <div className="grid grid-cols-[repeat(auto-fit,48px)] gap-2">
+      <div className="grid grid-cols-[repeat(auto-fit,48px)] gap-2 max-w-5xl mx-auto justify-center">
         {cells.map((cell, i) => {
           const q = QUARTER[quarterOf(cell.month)]
 
@@ -64,7 +64,7 @@ export default function YearPage() {
             return (
               <div
                 key={i}
-                className={`flex h-7 items-center justify-center rounded-sm px-2 text-center leading-none ${q.base}`}
+                className={`flex h-7  items-center justify-center rounded-sm px-2 text-center leading-none ${q.base}`}
               >
                 <span>{cell.label}</span>
               </div>
@@ -81,7 +81,7 @@ export default function YearPage() {
               className={[
                 'flex h-7 items-center justify-center rounded-sm px-2 text-center leading-none tabular-nums',
                 bg,
-                cell.key === todayKey ? 'font-semibold text-ink-0!' : '',
+                cell.key === todayKey ? 'font-semibold text-ink-0! border border-ink-30' : '',
               ].join(' ')}
             >
               <span>{cell.day}</span>
