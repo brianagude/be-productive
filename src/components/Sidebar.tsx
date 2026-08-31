@@ -7,7 +7,9 @@ import {
   ListIcon,
   HelpIcon,
   PaintbrushIcon,
+  PlusIcon,
   TimerIcon,
+  TrashIcon,
   YearIcon,
 } from "./Icons";
 import { useDeckControl } from "./deckControl";
@@ -27,12 +29,18 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
     <section className="group/sidebar absolute top-0 right-0 h-auto w-fit cursor-pointer z-50">
       <div className="p-4 flex flex-col gap-10 md:p-6">
         <div className="flex flex-col gap-3">
-          {deck.available && (
-            <button type="button" className={buttonStyles} onClick={deck.toggle}>
-              <span className={spanStyles}>{deck.spread ? "Stack" : "Spread"}</span>
-              <FanIcon />
-            </button>
-          )}
+          <button type="button" className={buttonStyles} onClick={deck.add} disabled={!deck.canAdd}>
+            <span className={spanStyles}>New List</span>
+            <PlusIcon />
+          </button>
+          <button type="button" className={buttonStyles} onClick={deck.remove} disabled={!deck.canRemove}>
+            <span className={spanStyles}>Delete List</span>
+            <TrashIcon />
+          </button>
+          <button type="button" className={buttonStyles} onClick={deck.toggle} disabled={!deck.available}>
+            <span className={spanStyles}>{deck.spread ? "Stack" : "Spread"}</span>
+            <FanIcon />
+          </button>
         </div>
         <div className="flex flex-col gap-3">
           <Link href="/" className={buttonStyles}>

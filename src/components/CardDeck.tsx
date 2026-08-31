@@ -119,7 +119,13 @@ const carouselPos = (rel: number) => ({
   pointerEvents: (Math.abs(rel) < 0.5 ? 'auto' : 'none') as 'auto' | 'none',
 })
 
-export function CardDeck({ items }: { items: DeckItem[] }) {
+interface CardDeckProps {
+  items: DeckItem[]
+  onAddCard?: () => void
+  onDeleteCard?: (id: string) => void
+}
+
+export function CardDeck({ items, onAddCard, onDeleteCard }: CardDeckProps) {
   const scope = useRef<HTMLDivElement>(null)
   const nodes = useRef(new Map<string, HTMLDivElement>())
   const obsRef = useRef<Observer | null>(null)
@@ -133,6 +139,10 @@ export function CardDeck({ items }: { items: DeckItem[] }) {
   const n = items.length
   const el = (i: number) => nodes.current.get(items[i].key)!
   const allEls = () => items.map((_, i) => el(i))
+  const maxH = () => {
+    const els = allEls()
+    return els.length ? Math.max(...els.map(e => e.offsetHeight)) : 0
+  }
 
   const reduced = () =>
     typeof window !== 'undefined' &&
@@ -160,6 +170,7 @@ export function CardDeck({ items }: { items: DeckItem[] }) {
   }, [])
 
   const place = (animate: boolean) => {
+    if (!items.length) return
     const pos = view.current.pos
     const exp = view.current.expanded
     const top = curIndex()
@@ -217,11 +228,10 @@ export function CardDeck({ items }: { items: DeckItem[] }) {
     if (mode !== 'fan') return
     const exp = !view.current.expanded
     view.current.expanded = exp
-    deck.report(exp)
+    deck.report({ spread: exp })
     if (!exp) view.current.pos = Math.round(view.current.pos)
-    const h = Math.max(...allEls().map(e => e.offsetHeight))
     gsap.to(scope.current, {
-      height: fanHeight(h, exp),
+      height: fanHeight(maxH(), exp),
       duration: dur(0.4),
       ease: 'power3.inOut',
     })
@@ -229,22 +239,44 @@ export function CardDeck({ items }: { items: DeckItem[] }) {
     if (obsRef.current) exp ? obsRef.current.enable() : obsRef.current.disable()
   }
 
-  // expose the fan toggle to the sidebar (fan mode only)
-  const toggleRef = useRef(toggle)
-  toggleRef.current = toggle
+  // expose deck actions to the sidebar (fan mode only)
+  const actionsRef = useRef({ toggle: () => {}, add: () => {}, remove: () => {} })
+  actionsRef.current = {
+    toggle,
+    add: () => {
+      view.current.pos = n // land on the freshly-added card once it's in
+      onAddCard?.()
+    },
+    remove: () => {
+      const id = items[curIndex()]?.key
+      if (id) onDeleteCard?.(id)
+    },
+  }
   useEffect(() => {
-    deck.bind(mode === 'fan' ? () => toggleRef.current() : null)
+    deck.bind(
+      mode === 'fan'
+        ? {
+            toggle: () => actionsRef.current.toggle(),
+            add: () => actionsRef.current.add(),
+            remove: () => actionsRef.current.remove(),
+          }
+        : null,
+    )
     return () => deck.bind(null)
   }, [mode, deck.bind])
 
+  useEffect(() => {
+    deck.report({ count: n })
+  }, [n, deck.report])
+
   useGSAP(
     () => {
-      // clean slate whenever mode / reach flips
+      // clean slate whenever mode / reach / card count changes
       view.current.expanded = false
-      view.current.pos = curIndex()
-      deck.report(false)
+      view.current.pos = gsap.utils.clamp(0, Math.max(0, n - 1), Math.round(view.current.pos))
+      deck.report({ spread: false })
 
-      const h = Math.max(...allEls().map(e => e.offsetHeight))
+      const h = maxH()
 
       if (mode === 'carousel') {
         gsap.set(scope.current, { height: h + 24 })
@@ -311,7 +343,7 @@ export function CardDeck({ items }: { items: DeckItem[] }) {
         obsRef.current = null
       }
     },
-    { scope, dependencies: [mode, reach], revertOnUpdate: true },
+    { scope, dependencies: [mode, reach, n], revertOnUpdate: true },
   )
 
   const btn =

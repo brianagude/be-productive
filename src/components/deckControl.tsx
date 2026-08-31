@@ -1,36 +1,67 @@
 'use client'
 
-import { createContext, useCallback, useContext, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+
+interface DeckActions {
+  toggle: () => void
+  add: () => void
+  remove: () => void
+}
 
 interface DeckControl {
   /** true = the deck is fanned open */
   spread: boolean
-  /** true = a deck that can be fanned is mounted (fan mode) */
+  /** true = a fan-mode deck is mounted (list page, desktop + mouse) */
   available: boolean
+  /** New allowed: on the stacked list view */
+  canAdd: boolean
+  /** Delete allowed: stacked list view with more than one card */
+  canRemove: boolean
   toggle: () => void
-  /** CardDeck internal: register the toggle impl (or null to hide the control) */
-  bind: (impl: (() => void) | null) => void
-  /** CardDeck internal: report the current spread state */
-  report: (spread: boolean) => void
+  add: () => void
+  remove: () => void
+  // CardDeck internals:
+  bind: (actions: DeckActions | null) => void
+  report: (patch: { spread?: boolean; count?: number }) => void
 }
 
 const Ctx = createContext<DeckControl | null>(null)
 
 export function DeckControlProvider({ children }: { children: React.ReactNode }) {
   const [spread, setSpread] = useState(false)
+  const [count, setCount] = useState(0)
   const [available, setAvailable] = useState(false)
-  const impl = useRef<(() => void) | null>(null)
+  const actions = useRef<DeckActions | null>(null)
 
-  const toggle = useCallback(() => impl.current?.(), [])
-  const bind = useCallback((fn: (() => void) | null) => {
-    impl.current = fn
-    setAvailable(!!fn)
+  const bind = useCallback((a: DeckActions | null) => {
+    actions.current = a
+    setAvailable(!!a)
   }, [])
-  const report = useCallback((s: boolean) => setSpread(s), [])
+  const report = useCallback((patch: { spread?: boolean; count?: number }) => {
+    if (patch.spread !== undefined) setSpread(patch.spread)
+    if (patch.count !== undefined) setCount(patch.count)
+  }, [])
 
-  return (
-    <Ctx.Provider value={{ spread, available, toggle, bind, report }}>{children}</Ctx.Provider>
+  const toggle = useCallback(() => actions.current?.toggle(), [])
+  const add = useCallback(() => actions.current?.add(), [])
+  const remove = useCallback(() => actions.current?.remove(), [])
+
+  const value = useMemo<DeckControl>(
+    () => ({
+      spread,
+      available,
+      canAdd: available && !spread,
+      canRemove: available && !spread && count > 0,
+      toggle,
+      add,
+      remove,
+      bind,
+      report,
+    }),
+    [spread, available, count, toggle, add, remove, bind, report],
   )
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
 export function useDeckControl() {

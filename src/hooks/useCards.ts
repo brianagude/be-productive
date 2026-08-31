@@ -1,99 +1,119 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { CardKind, CardsState, CardState, Task } from '@/lib/types'
-import {
-  getCards, saveCards, getResets, saveResets, applyResets, blankCards,
-} from '@/lib/cardsStorage'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { CardState, Task } from '@/lib/types'
+import { getCards, saveCards, newCard } from '@/lib/cardsStorage'
 import { pushCompletion, popCompletionForToday } from '@/lib/completionsStorage'
 
 export function useCards() {
-  const [cards, setCards] = useState<CardsState>(blankCards)
-  const cardsRef = useRef<CardsState>(cards)
+  const [cards, setCards] = useState<CardState[]>([])
+  const ref = useRef<CardState[]>(cards)
 
-  const persist = useCallback((next: CardsState) => {
-    cardsRef.current = next
+  const persist = useCallback((next: CardState[]) => {
+    ref.current = next
     setCards(next)
     saveCards(next)
   }, [])
 
-  // Load from storage + apply any missed resets, on mount and on tab refocus.
+  // Load from storage on mount and on tab refocus (client-only).
   useEffect(() => {
-    const load = () => {
-      const { cards: fixed, resets, changed } = applyResets(getCards(), getResets())
-      if (changed) {
-        saveCards(fixed)
-        saveResets(resets)
-      }
-      cardsRef.current = fixed
-      setCards(fixed)
-    }
-    load()
+    const loaded = getCards()
+    ref.current = loaded
+    setCards(loaded)
+    saveCards(loaded)
+
     const onVisible = () => {
-      if (document.visibilityState === 'visible') load()
+      if (document.visibilityState !== 'visible') return
+      const fresh = getCards()
+      ref.current = fresh
+      setCards(fresh)
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
-  const mutateTask = useCallback(
-    (kind: CardKind, index: number, fn: (t: Task) => Task) => {
-      const cur = cardsRef.current
-      const card = cur[kind]
-      const tasks = card.tasks.map((t, i) => (i === index ? fn(t) : t))
-      persist({ ...cur, [kind]: { ...card, tasks } })
+  const patchCard = useCallback(
+    (id: string, fn: (c: CardState) => CardState) => {
+      persist(ref.current.map(c => (c.id === id ? fn(c) : c)))
     },
     [persist],
   )
 
-  const setTaskText = useCallback(
-    (kind: CardKind, index: number, text: string) => {
-      mutateTask(kind, index, t => ({ ...t, text }))
+  const mutateTask = useCallback(
+    (id: string, index: number, fn: (t: Task) => Task) => {
+      patchCard(id, c => ({
+        ...c,
+        tasks: c.tasks.map((t, i) => (i === index ? fn(t) : t)),
+      }))
     },
+    [patchCard],
+  )
+
+  const setTaskText = useCallback(
+    (id: string, index: number, text: string) => mutateTask(id, index, t => ({ ...t, text })),
     [mutateTask],
   )
 
   const toggleImportant = useCallback(
-    (kind: CardKind, index: number) => {
-      mutateTask(kind, index, t => ({ ...t, important: !t.important }))
-    },
+    (id: string, index: number) =>
+      mutateTask(id, index, t => ({ ...t, important: !t.important })),
     [mutateTask],
   )
 
-  /** Toggle done. Records/undoes a completion. Returns the new done state (for the undo toast). */
+  /** Toggle done. Records/undoes a completion. Returns the new done state. */
   const toggleDone = useCallback(
-    (kind: CardKind, index: number): boolean => {
-      const task = cardsRef.current[kind].tasks[index]
-      if (task.text.trim() === '') return task.done // ignore empty slots
+    (id: string, index: number): boolean => {
+      const task = ref.current.find(c => c.id === id)?.tasks[index]
+      if (!task || task.text.trim() === '') return !!task?.done
       const nextDone = !task.done
       if (nextDone) pushCompletion()
       else popCompletionForToday()
-      mutateTask(kind, index, t => ({ ...t, done: nextDone }))
+      mutateTask(id, index, t => ({ ...t, done: nextDone }))
       return nextDone
     },
     [mutateTask],
   )
 
   const setCardMeta = useCallback(
-    (kind: CardKind, patch: Partial<Pick<CardState, 'title' | 'description'>>) => {
-      const cur = cardsRef.current
-      persist({ ...cur, [kind]: { ...cur[kind], ...patch } })
+    (id: string, patch: Partial<Pick<CardState, 'title' | 'description' | 'date'>>) => {
+      patchCard(id, c => ({ ...c, ...patch }))
+    },
+    [patchCard],
+  )
+
+  /** New card, appended to the end of the list. */
+  const addCard = useCallback(() => {
+    persist([...ref.current, newCard()])
+  }, [persist])
+
+  /** One-shot import: append a new card seeded with the given task texts. */
+  const importTasks = useCallback(
+    (texts: string[]) => {
+      if (!texts.length) return
+      const card = newCard()
+      card.tasks = card.tasks.map((t, i) => (texts[i] ? { ...t, text: texts[i] } : t))
+      card.title = 'IMPORTED'
+      persist([...ref.current, card])
     },
     [persist],
   )
 
-  /** One-shot bulk import used by the migration drawer: fill empty slots with texts. */
-  const importTexts = useCallback(
-    (kind: CardKind, texts: string[]) => {
-      const cur = cardsRef.current
-      const card = cur[kind]
-      const tasks = card.tasks.map((t, i) =>
-        texts[i] ? { text: texts[i], done: false, important: false } : t,
-      )
-      persist({ ...cur, [kind]: { ...card, tasks } })
+  /** Remove a card from the list. */
+  const deleteCard = useCallback(
+    (id: string) => {
+      persist(ref.current.filter(c => c.id !== id))
     },
     [persist],
   )
 
-  return { cards, setTaskText, toggleDone, toggleImportant, setCardMeta, importTexts }
+  return {
+    cards,
+    setTaskText,
+    toggleDone,
+    toggleImportant,
+    setCardMeta,
+    addCard,
+    deleteCard,
+    importTasks,
+  }
 }

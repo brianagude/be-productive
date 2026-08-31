@@ -1,11 +1,7 @@
-import { CardKind } from './types'
-
 const LEGACY_PREFIX = 'tiny-tools:'
 
 interface LegacyTodo {
   title?: string
-  daily?: boolean
-  weeklyDays?: number[]
 }
 
 /** True if any pre-redesign localStorage key is still present. */
@@ -18,24 +14,16 @@ export function hasLegacyData(): boolean {
   }
 }
 
-/** Legacy task titles grouped into the new card buckets. */
-export function readLegacyBuckets(): Record<CardKind, string[]> {
-  const out: Record<CardKind, string[]> = { today: [], daily: [], weekly: [] }
-  if (typeof window === 'undefined') return out
+/** Flat list of task titles from the old app. */
+export function readLegacyTasks(): string[] {
+  if (typeof window === 'undefined') return []
   try {
     const raw = localStorage.getItem(LEGACY_PREFIX + 'todos')
     const todos: LegacyTodo[] = raw ? JSON.parse(raw) : []
-    for (const t of todos) {
-      const text = (t.title ?? '').trim()
-      if (!text) continue
-      if (t.daily) out.daily.push(text)
-      else if (Array.isArray(t.weeklyDays) && t.weeklyDays.length > 0) out.weekly.push(text)
-      else out.today.push(text)
-    }
+    return todos.map(t => (t.title ?? '').trim()).filter(Boolean)
   } catch {
-    /* ignore malformed legacy data */
+    return []
   }
-  return out
 }
 
 export function clearLegacyData(): void {

@@ -608,3 +608,33 @@ export function FanIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function TrashIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+    >
+      <title>Trash Icon</title>
+      <g
+        stroke="var(--color-icon-stroke)"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path
+          d="M5.14282 6.42859L6.13425 19.7143C6.13425 20.2039 6.32877 20.6735 6.67509 21.0198C7.0214 21.3661 7.49096 21.5606 7.98068 21.5606H16.0192C16.5089 21.5606 16.9785 21.3661 17.3248 21.0198C17.6711 20.6735 17.8656 20.2039 17.8656 19.7143L18.8571 6.42859"
+          fill="var(--color-icon-fill)"
+        />
+        <path d="M3.42859 6.42859H20.5714" />
+        <path d="M9.42859 10.7143V16.7143" />
+        <path d="M14.5714 10.7143V16.7143" />
+        <path d="M8.57145 6.42859V3.85716C8.57145 3.62982 8.66176 3.41181 8.8225 3.25107C8.98325 3.09032 9.20125 3.00002 9.4286 3.00002H14.5714C14.7988 3.00002 15.0168 3.09032 15.1775 3.25107C15.3383 3.41181 15.4286 3.62982 15.4286 3.85716V6.42859" />
+      </g>
+    </svg>
+  );
+}
