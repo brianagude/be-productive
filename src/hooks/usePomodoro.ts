@@ -5,29 +5,23 @@ import {
   PomodoroSettings,
   getPomodoroSettings,
   savePomodoroSettings,
-  getTimeSpentForTodo,
-  addTimeSpent,
+  addFocusSession,
 } from '@/lib/pomodoroStorage'
 
 export type PomodoroPhase = 'idle' | 'work' | 'break' | 'paused' | 'prompt'
 
 export interface UsePomodoroReturn {
   phase: PomodoroPhase
-  selectedTodoId: string | null
-  selectedTodoTitle: string | null
   secondsLeft: number
   totalSeconds: number
   settings: PomodoroSettings
-  canChangeTask: boolean
   start: () => void
   pause: () => void
   resume: () => void
   stop: () => void
   skipBreak: () => void
   continueWork: () => void
-  selectTodo: (id: string, title: string) => void
   updateSettings: (s: PomodoroSettings) => void
-  getTimeSpentForTodo: (id: string) => number
 }
 
 function beep(ctx: AudioContext, frequency: number, duration: number, startTime: number) {
@@ -53,7 +47,7 @@ function playBreakDone(ctx: AudioContext) {
   beep(ctx, 660, 0.3, ctx.currentTime)
 }
 
-// Soft two-note elevator chime played periodically during break
+// Soft two-note chime played once near the end of the break
 function playAmbientChime(ctx: AudioContext) {
   const t = ctx.currentTime
   const osc1 = ctx.createOscillator()
@@ -89,41 +83,33 @@ function sendNotification(title: string, body: string) {
 
 export function usePomodoro(): UsePomodoroReturn {
   const [phase, setPhase] = useState<PomodoroPhase>('idle')
-  const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null)
-  const [selectedTodoTitle, setSelectedTodoTitle] = useState<string | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [totalSeconds, setTotalSeconds] = useState(0)
   const [settings, setSettings] = useState<PomodoroSettings>(() => getPomodoroSettings())
 
-  // Store phase in ref so interval callback can read current value
   const phaseRef = useRef<PomodoroPhase>('idle')
-  const selectedTodoIdRef = useRef<string | null>(null)
   const totalSecondsRef = useRef(0)
   const settingsRef = useRef(settings)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
-  // Wall-clock refs for tab-throttling resistance
+  // Wall-clock refs so tab-throttling can't drift the countdown
   const endTimeRef = useRef<number>(0)
   const remainingSecondsRef = useRef<number>(0)
 
-  // Keep refs in sync with state after each render (must be in effect, not render body)
   useEffect(() => {
     phaseRef.current = phase
-    selectedTodoIdRef.current = selectedTodoId
     totalSecondsRef.current = totalSeconds
     settingsRef.current = settings
   })
 
-  // handlePhaseComplete stored in ref so interval never captures stale closure
   const handlePhaseCompleteRef = useRef<() => void>(() => {})
 
   const handlePhaseComplete = useCallback(() => {
     const currentPhase = phaseRef.current
-    const todoId = selectedTodoIdRef.current
     const ctx = audioCtxRef.current
 
     if (currentPhase === 'work') {
-      if (todoId) addTimeSpent(todoId, settingsRef.current.workMins * 60)
+      addFocusSession(settingsRef.current.workMins)
       if (ctx) playWorkDone(ctx)
       sendNotification('Work session complete!', 'Time for a break.')
       const breakSecs = settingsRef.current.breakMins * 60
@@ -144,7 +130,7 @@ export function usePomodoro(): UsePomodoroReturn {
     handlePhaseCompleteRef.current = handlePhaseComplete
   }, [handlePhaseComplete])
 
-  // Main countdown interval (work and break phases)
+  // Countdown interval (work + break)
   useEffect(() => {
     if (phase !== 'work' && phase !== 'break') return
 
@@ -160,17 +146,14 @@ export function usePomodoro(): UsePomodoroReturn {
     return () => clearInterval(id)
   }, [phase])
 
-  // Ambient chime once at the 1-minute warning during break
+  // Ambient chime once at the 1-minute break warning
   const chimePlayedRef = useRef(false)
   useEffect(() => {
-    if (phase === 'break') {
-      chimePlayedRef.current = false
-    }
+    if (phase === 'break') chimePlayedRef.current = false
   }, [phase])
 
   useEffect(() => {
-    if (phase !== 'break') return
-    if (chimePlayedRef.current) return
+    if (phase !== 'break' || chimePlayedRef.current) return
     if (secondsLeft <= 60 && secondsLeft > 0) {
       chimePlayedRef.current = true
       const ctx = audioCtxRef.current
@@ -178,7 +161,7 @@ export function usePomodoro(): UsePomodoroReturn {
     }
   }, [phase, secondsLeft])
 
-  // Page title shows timer countdown while active
+  // Countdown in the tab title while active
   useEffect(() => {
     if (typeof document === 'undefined') return
     if (phase === 'idle' || phase === 'prompt') {
@@ -187,25 +170,17 @@ export function usePomodoro(): UsePomodoroReturn {
     }
     const m = Math.floor(secondsLeft / 60)
     const s = secondsLeft % 60
-    const timeStr = `${m}:${s.toString().padStart(2, '0')}`
     const label = phase === 'work' ? 'Work' : phase === 'break' ? 'Break' : 'Paused'
-    document.title = `${timeStr} · ${label} · Be Productive`
+    document.title = `${m}:${s.toString().padStart(2, '0')} · ${label} · Be Productive`
     return () => { document.title = 'Be Productive' }
   }, [phase, secondsLeft])
 
   const start = useCallback(() => {
-    if (!selectedTodoIdRef.current) return
-
-    // Create AudioContext on first user gesture (iOS requirement)
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioContext()
-    }
-
-    // Request notification permission in user-gesture context
+    // AudioContext must be created in a user gesture (iOS)
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext()
     if (typeof window !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission()
     }
-
     const secs = settingsRef.current.workMins * 60
     endTimeRef.current = Date.now() + secs * 1000
     setTotalSeconds(secs)
@@ -224,12 +199,11 @@ export function usePomodoro(): UsePomodoroReturn {
   }, [])
 
   const stop = useCallback(() => {
-    const todoId = selectedTodoIdRef.current
     const remaining = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000))
     const total = totalSecondsRef.current
     const elapsed = total - (phaseRef.current === 'paused' ? remainingSecondsRef.current : remaining)
-    if (todoId && (phaseRef.current === 'work' || phaseRef.current === 'paused') && elapsed > 0) {
-      addTimeSpent(todoId, elapsed)
+    if ((phaseRef.current === 'work' || phaseRef.current === 'paused') && elapsed > 0) {
+      addFocusSession(elapsed / 60)
     }
     setPhase('idle')
     setSecondsLeft(0)
@@ -243,7 +217,6 @@ export function usePomodoro(): UsePomodoroReturn {
   }, [])
 
   const continueWork = useCallback(() => {
-    if (!selectedTodoIdRef.current) return
     const secs = settingsRef.current.workMins * 60
     endTimeRef.current = Date.now() + secs * 1000
     setTotalSeconds(secs)
@@ -251,35 +224,22 @@ export function usePomodoro(): UsePomodoroReturn {
     setPhase('work')
   }, [])
 
-  const selectTodo = useCallback((id: string, title: string) => {
-    if (phaseRef.current === 'work') return
-    setSelectedTodoId(id)
-    setSelectedTodoTitle(title)
-  }, [])
-
   const updateSettings = useCallback((s: PomodoroSettings) => {
     setSettings(s)
     savePomodoroSettings(s)
   }, [])
 
-  const canChangeTask = phase === 'idle' || phase === 'break' || phase === 'prompt'
-
   return {
     phase,
-    selectedTodoId,
-    selectedTodoTitle,
     secondsLeft,
     totalSeconds,
     settings,
-    canChangeTask,
     start,
     pause,
     resume,
     stop,
     skipBreak,
     continueWork,
-    selectTodo,
     updateSettings,
-    getTimeSpentForTodo,
   }
 }
