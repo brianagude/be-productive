@@ -11,6 +11,7 @@ const urgentPaths: Record<Weight, string> = {
 };
 
 export function ListIcon(props: SVGProps<SVGSVGElement>) {
+  const id = useId();
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -21,45 +22,31 @@ export function ListIcon(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <title>List Icon</title>
-      <path
-        d="M15.4287 4.28564H5.143C4.19623 4.28564 3.42871 5.05316 3.42871 5.99993V21.4285C3.42871 22.3753 4.19623 23.1428 5.143 23.1428H15.4287C16.3755 23.1428 17.143 22.3753 17.143 21.4285V5.99993C17.143 5.05316 16.3755 4.28564 15.4287 4.28564Z"
-        fill="var(--color-icon-fill)"
-      />
-      <path
-        d="M15.4287 4.28564H5.143C4.19623 4.28564 3.42871 5.05316 3.42871 5.99993V21.4285C3.42871 22.3753 4.19623 23.1428 5.143 23.1428H15.4287C16.3755 23.1428 17.143 22.3753 17.143 21.4285V5.99993C17.143 5.05316 16.3755 4.28564 15.4287 4.28564Z"
-        stroke="var(--color-icon-stroke)"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.85742 8.57129H13.7146"
-        stroke="var(--color-icon-stroke)"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.85742 12.8569H13.7146"
-        stroke="var(--color-icon-stroke)"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.85742 17.1426H10.286"
-        stroke="var(--color-icon-stroke)"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M7.71436 0.856934H18.8572C19.3118 0.856934 19.748 1.03755 20.0694 1.35904C20.3908 1.68053 20.5715 2.11656 20.5715 2.57122V18.8569"
-        stroke="var(--color-icon-stroke)"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <g clipPath={`url(#${id})`}>
+        <path
+          d="M21.4286 3.42871H2.57146C1.62469 3.42871 0.857178 4.19623 0.857178 5.143V21.4287C0.857178 22.3755 1.62469 23.143 2.57146 23.143H21.4286C22.3754 23.143 23.1429 22.3755 23.1429 21.4287V5.143C23.1429 4.19623 22.3754 3.42871 21.4286 3.42871Z"
+          fill="var(--color-icon-fill)"
+        />
+        <g
+          stroke="var(--color-icon-stroke)"
+          strokeWidth="1.1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M6.85718 6.00003V0.857178" />
+          <path d="M12 6.00003V0.857178" />
+          <path d="M17.1428 6.00003V0.857178" />
+          <path d="M21.4286 3.42871H2.57146C1.62469 3.42871 0.857178 4.19623 0.857178 5.143V21.4287C0.857178 22.3755 1.62469 23.143 2.57146 23.143H21.4286C22.3754 23.143 23.1429 22.3755 23.1429 21.4287V5.143C23.1429 4.19623 22.3754 3.42871 21.4286 3.42871Z" />
+          <path d="M6 9.5H17.8571" />
+          <path d="M6 13.79H17.8571" />
+          <path d="M6 18.0701H14.4286" />
+        </g>
+      </g>
+      <defs>
+        <clipPath id={id}>
+          <rect width="24" height="24" fill="white" />
+        </clipPath>
+      </defs>
     </svg>
   );
 }
@@ -561,8 +548,10 @@ export function HelpIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function FanIcon(props: SVGProps<SVGSVGElement>) {
-  const id = useId();
+export function FanIcon({
+  spread = false,
+  ...props
+}: SVGProps<SVGSVGElement> & { spread?: boolean }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -572,39 +561,23 @@ export function FanIcon(props: SVGProps<SVGSVGElement>) {
       fill="none"
       {...props}
     >
-      <title>Fan Icon</title>
-      <g clipPath={`url(#${id})`}>
-        <path
-          d="M12.8058 11.8285C12.5515 11.9389 12.2773 11.9959 12.0001 11.9959C11.7229 11.9959 11.4486 11.9389 11.1944 11.8285L1.42294 7.30276C1.26427 7.22272 1.13092 7.10021 1.03776 6.94888C0.944594 6.79756 0.895264 6.62332 0.895264 6.44561C0.895264 6.26789 0.944594 6.09367 1.03776 5.94233C1.13092 5.791 1.26427 5.66849 1.42294 5.58847L11.1944 1.02847C11.4486 0.918058 11.7229 0.861084 12.0001 0.861084C12.2773 0.861084 12.5515 0.918058 12.8058 1.02847L22.5772 5.55419C22.736 5.63421 22.8692 5.75671 22.9624 5.90805C23.0555 6.05939 23.1049 6.23361 23.1049 6.41133C23.1049 6.58903 23.0555 6.76327 22.9624 6.91459C22.8692 7.06593 22.736 7.18843 22.5772 7.26847L12.8058 11.8285Z"
+      <title>{spread ? "Stack lists" : "Spread lists"}</title>
+      <g
+        stroke="var(--color-icon-stroke)"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="1.2" y="5.9" width="21.6" height="12.2" rx="6.1" fill="var(--color-icon-fill)" />
+        <circle
+          cx="7.4"
+          cy="12"
+          r="2.9"
           fill="var(--color-icon-fill)"
-        />
-        <path
-          d="M12.8058 11.8285C12.5515 11.9389 12.2773 11.9959 12.0001 11.9959C11.7229 11.9959 11.4486 11.9389 11.1944 11.8285L1.42294 7.30275C1.26427 7.22273 1.13092 7.10023 1.03776 6.94889C0.944594 6.79755 0.895264 6.62333 0.895264 6.44561C0.895264 6.26789 0.944594 6.09367 1.03776 5.94233C1.13092 5.79101 1.26427 5.66851 1.42294 5.58847L11.1944 1.02847C11.4486 0.918058 11.7229 0.861084 12.0001 0.861084C12.2773 0.861084 12.5515 0.918058 12.8058 1.02847L22.5772 5.55418C22.736 5.63422 22.8692 5.75673 22.9624 5.90805C23.0555 6.05938 23.1049 6.23361 23.1049 6.41133C23.1049 6.58905 23.0555 6.76327 22.9624 6.91461C22.8692 7.06594 22.736 7.18845 22.5772 7.26847L12.8058 11.8285Z"
-          stroke="var(--color-icon-stroke)"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M23.1429 12.5999L12.6857 17.417C12.4624 17.5188 12.2198 17.5716 11.9743 17.5716C11.7289 17.5716 11.4862 17.5188 11.2629 17.417L0.857178 12.5999"
-          stroke="var(--color-icon-stroke)"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M23.1429 18.1714L12.6857 22.9885C12.4624 23.0904 12.2198 23.1432 11.9743 23.1432C11.7289 23.1432 11.4862 23.0904 11.2629 22.9885L0.857178 18.1714"
-          stroke="var(--color-icon-stroke)"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          className="icon-toggle-dot"
+          style={{ transform: spread ? "translateX(9.2px)" : "translateX(0)" }}
         />
       </g>
-      <defs>
-        <clipPath id={id}>
-          <rect width="24" height="24" fill="white" />
-        </clipPath>
-      </defs>
     </svg>
   );
 }
@@ -635,6 +608,7 @@ export function MenuIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 export function TrashIcon(props: SVGProps<SVGSVGElement>) {
+  const id = useId();
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -644,22 +618,27 @@ export function TrashIcon(props: SVGProps<SVGSVGElement>) {
       fill="none"
       {...props}
     >
-      <title>Trash Icon</title>
-      <g
-        stroke="var(--color-icon-stroke)"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <title>Delete Icon</title>
+      <g clipPath={`url(#${id})`}>
         <path
-          d="M5.14282 6.42859L6.13425 19.7143C6.13425 20.2039 6.32877 20.6735 6.67509 21.0198C7.0214 21.3661 7.49096 21.5606 7.98068 21.5606H16.0192C16.5089 21.5606 16.9785 21.3661 17.3248 21.0198C17.6711 20.6735 17.8656 20.2039 17.8656 19.7143L18.8571 6.42859"
+          d="M18 0.857178H6.00003C3.15972 0.857178 0.857178 3.15972 0.857178 6.00003V18C0.857178 20.8404 3.15972 23.1429 6.00003 23.1429H18C20.8404 23.1429 23.1429 20.8404 23.1429 18V6.00003C23.1429 3.15972 20.8404 0.857178 18 0.857178Z"
           fill="var(--color-icon-fill)"
         />
-        <path d="M3.42859 6.42859H20.5714" />
-        <path d="M9.42859 10.7143V16.7143" />
-        <path d="M14.5714 10.7143V16.7143" />
-        <path d="M8.57145 6.42859V3.85716C8.57145 3.62982 8.66176 3.41181 8.8225 3.25107C8.98325 3.09032 9.20125 3.00002 9.4286 3.00002H14.5714C14.7988 3.00002 15.0168 3.09032 15.1775 3.25107C15.3383 3.41181 15.4286 3.62982 15.4286 3.85716V6.42859" />
+        <g
+          stroke="var(--color-icon-stroke)"
+          strokeWidth="1.1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 0.857178H6.00003C3.15972 0.857178 0.857178 3.15972 0.857178 6.00003V18C0.857178 20.8404 3.15972 23.1429 6.00003 23.1429H18C20.8404 23.1429 23.1429 20.8404 23.1429 18V6.00003C23.1429 3.15972 20.8404 0.857178 18 0.857178Z" />
+          <path d="M6.85718 12H17.1429" />
+        </g>
       </g>
+      <defs>
+        <clipPath id={id}>
+          <rect width="24" height="24" fill="white" />
+        </clipPath>
+      </defs>
     </svg>
   );
 }

@@ -49,11 +49,11 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
         <div className="p-4 flex flex-col gap-10 md:p-6">
           <div className="flex flex-col gap-3">
             <Link href="/" className={buttonStyles}>
-              <span className={spanStyles}>List View</span>
+              <span className={spanStyles}>Lists</span>
               <ListIcon />
             </Link>
             <Link href="/year" className={buttonStyles}>
-              <span className={spanStyles}>Year View</span>
+              <span className={spanStyles}>Year</span>
               <YearIcon />
             </Link>
           </div>
@@ -69,7 +69,7 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
             </button>
             <button type="button" className={buttonStyles} onClick={deck.toggle} disabled={!deck.canToggle}>
               <span className={spanStyles}>{deck.spread ? "Stack" : "Spread"}</span>
-              <FanIcon />
+              <FanIcon spread={deck.spread} />
             </button>
           </div>
 
@@ -118,11 +118,11 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
               <div className="flex flex-col">
                 <Link href="/" className={rowCls} onClick={close}>
                   <ListIcon />
-                  <span>List View</span>
+                  <span>Lists</span>
                 </Link>
                 <Link href="/year" className={rowCls} onClick={close}>
                   <YearIcon />
-                  <span>Year View</span>
+                  <span>Year</span>
                 </Link>
 
               </div>
@@ -163,7 +163,7 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
                     close();
                   }}
                 >
-                  <FanIcon />
+                  <FanIcon spread={deck.spread} />
                   <span>{deck.spread ? "Stack" : "Spread"}</span>
                 </button>
               </div>
