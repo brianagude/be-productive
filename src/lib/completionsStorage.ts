@@ -17,22 +17,9 @@ function save(list: number[]): void {
   localStorage.setItem(COMPLETIONS_KEY, JSON.stringify(list))
 }
 
+/** Tally one completion. Unchecking never removes one — re-checking counts again. */
 export function pushCompletion(at: number = Date.now()): void {
   save([...getCompletions(), at])
-}
-
-/** Best-effort undo: remove the most recent completion recorded today. */
-export function popCompletionForToday(now: number = Date.now()): void {
-  const list = getCompletions()
-  const start = new Date(now)
-  start.setHours(0, 0, 0, 0)
-  for (let i = list.length - 1; i >= 0; i--) {
-    if (list[i] >= start.getTime()) {
-      list.splice(i, 1)
-      save(list)
-      return
-    }
-  }
 }
 
 /** Completion counts keyed by local YYYY-MM-DD. */

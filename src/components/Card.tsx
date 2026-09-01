@@ -4,22 +4,9 @@ import Image from 'next/image'
 import { CardState } from '@/lib/types'
 import { TaskRow } from './TaskRow'
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
-/** YYYY-MM-DD → "November, 29, 2026" (parsed as a local date, no TZ shift). */
-function formatCardDate(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
-  if (!m) return ''
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  return Number.isNaN(d.getTime()) ? '' : `${MONTHS[d.getMonth()]}, ${d.getDate()}, ${d.getFullYear()}`
-}
-
 interface CardProps {
   card: CardState
-  onMeta: (patch: { title?: string; description?: string }) => void
+  onMeta: (patch: { title?: string; description?: string; date?: string }) => void
   onText: (index: number, text: string) => void
   onToggleDone: (index: number) => void
   onToggleImportant: (index: number) => void
@@ -51,8 +38,17 @@ export function Card({ card, onMeta, onText, onToggleDone, onToggleImportant }: 
           />
         </div>
         <div className="border-t border-ink-0 flex flex-col py-1 px-2">
-          <span className="text-[10px] font-semibold uppercase">Date</span>
-          <span className="cursor-default">{formatCardDate(card.date)}</span>
+          <label className="text-[10px] font-semibold uppercase" htmlFor={`date-${card.id}`}>
+            Date
+          </label>
+          <input
+            id={`date-${card.id}`}
+            type="date"
+            value={card.date}
+            onChange={e => e.target.value && onMeta({ date: e.target.value })}
+            aria-label="Card date"
+            className="outline-none bg-transparent cursor-pointer"
+          />
         </div>
       </div>
 

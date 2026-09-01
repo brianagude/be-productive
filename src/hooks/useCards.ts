@@ -2,8 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CardState, Task } from '@/lib/types'
-import { getCards, saveCards, newCard, getActiveId, saveActiveId } from '@/lib/cardsStorage'
-import { pushCompletion, popCompletionForToday } from '@/lib/completionsStorage'
+import {
+  getCards,
+  saveCards,
+  newCard,
+  getActiveId,
+  saveActiveId,
+  sortCards,
+} from '@/lib/cardsStorage'
+import { pushCompletion } from '@/lib/completionsStorage'
 
 /** Pick a sensible active id: the stored one if it still exists, else the last card. */
 function resolveActiveId(list: CardState[], preferred: string | null): string | null {
@@ -26,11 +33,12 @@ export function useCards() {
 
   const persist = useCallback(
     (next: CardState[]) => {
-      ref.current = next
-      setCards(next)
-      saveCards(next)
+      const sorted = sortCards(next)
+      ref.current = sorted
+      setCards(sorted)
+      saveCards(sorted)
       // keep the active pointer valid as cards come and go
-      const resolved = resolveActiveId(next, activeRef.current)
+      const resolved = resolveActiveId(sorted, activeRef.current)
       if (resolved !== activeRef.current) persistActive(resolved)
     },
     [persistActive],
@@ -98,14 +106,13 @@ export function useCards() {
     [mutateTask],
   )
 
-  /** Toggle done. Records/undoes a completion. Returns the new done state. */
+  /** Toggle done. Each check-on tallies a completion; unchecking never removes one. Returns the new done state. */
   const toggleDone = useCallback(
     (id: string, index: number): boolean => {
       const task = ref.current.find(c => c.id === id)?.tasks[index]
       if (!task || task.text.trim() === '') return !!task?.done
       const nextDone = !task.done
       if (nextDone) pushCompletion()
-      else popCompletionForToday()
       mutateTask(id, index, t => ({ ...t, done: nextDone }))
       return nextDone
     },

@@ -2,6 +2,12 @@ import { CardsState, CardState, Task, SLOTS, SMILEYS } from './types'
 
 const CARDS_KEY = 'bp:cards'
 const ACTIVE_KEY = 'bp:cards:active'
+const SPREAD_KEY = 'bp:cards:spread'
+
+/** Cards ordered by their date field, earliest first. Stable for equal dates. */
+export function sortCards(cards: CardsState): CardsState {
+  return [...cards].sort((a, b) => a.date.localeCompare(b.date))
+}
 
 // ── Factories ────────────────────────────────────────────────────────────────
 
@@ -78,7 +84,7 @@ export function getCards(): CardsState {
 
     if (Array.isArray(parsed)) {
       const cards = parsed.map(normCard)
-      return cards.length ? cards : blankCards()
+      return sortCards(cards.length ? cards : blankCards())
     }
 
     // migrate the old { today, daily, weekly } shape → a flat list
@@ -87,7 +93,7 @@ export function getCards(): CardsState {
         .map(k => parsed[k])
         .filter(Boolean)
         .map(normCard)
-      return legacy.length ? legacy : blankCards()
+      return sortCards(legacy.length ? legacy : blankCards())
     }
 
     return blankCards()
@@ -118,6 +124,27 @@ export function saveActiveId(id: string | null): void {
   try {
     if (id) localStorage.setItem(ACTIVE_KEY, id)
     else localStorage.removeItem(ACTIVE_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+// ── Spread / Stack view ──────────────────────────────────────────────────────
+// Whether the fan is showing the wide spread, so it reopens the way it was left.
+
+export function getSpread(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return localStorage.getItem(SPREAD_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function saveSpread(on: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(SPREAD_KEY, on ? '1' : '0')
   } catch {
     /* ignore */
   }
