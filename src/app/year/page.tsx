@@ -11,6 +11,8 @@ type Cell =
   | { kind: 'month'; label: string; month: number }
   | { kind: 'day'; key: string; day: number; weekend: boolean; month: number }
 
+const cellClasses = 'flex h-7 items-center justify-center px-2 text-center leading-none'
+
 // Q1 pink · Q2 custard · Q3 moss · Q4 lilac. Literal class strings so Tailwind
 // picks them up. base = month header, light = weekday with no completions,
 // med = weekday with completions. Weekends get no background.
@@ -56,7 +58,7 @@ export default function YearPage() {
     <>
       <h1 className="mb-10 text-xl font-semibold text-center">{year}</h1>
 
-      <div className="grid grid-cols-[repeat(auto-fit,48px)] gap-2 max-w-5xl mx-auto justify-center">
+      <div className="grid grid-cols-[repeat(auto-fit,48px)] max-w-5xl mx-auto justify-center">
         {cells.map((cell, i) => {
           const q = QUARTER[quarterOf(cell.month)]
 
@@ -64,7 +66,7 @@ export default function YearPage() {
             return (
               <div
                 key={i}
-                className={`flex h-7  items-center justify-center rounded-sm px-2 text-center leading-none ${q.base}`}
+                className={`col-span-2 ${cellClasses} ${q.med}`}
               >
                 <span>{cell.label}</span>
               </div>
@@ -72,16 +74,16 @@ export default function YearPage() {
           }
 
           const count = counts[cell.key] ?? 0
-          const bg = cell.weekend ? 'text-ink-60' : count > 0 ? q.med : q.light
+          const bg = cell.weekend ? 'text-ink-60' : count > 0 ? q.base : q.light
 
           return (
             <div
               key={i}
               title={count > 0 ? `${count} completed` : '0 completed'}
               className={[
-                'flex h-7 items-center justify-center rounded-sm px-2 text-center leading-none tabular-nums',
+                `${cellClasses} tabular-nums`,
                 bg,
-                cell.key === todayKey ? 'font-semibold text-ink-0! border border-ink-30' : '',
+                cell.key === todayKey ? 'font-bold text-ink-0!' : '',
               ].join(' ')}
             >
               <span>{cell.day}</span>

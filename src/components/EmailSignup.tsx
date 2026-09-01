@@ -1,9 +1,6 @@
 'use client'
 
 import { useId, useState } from 'react'
-import { Check } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 
 interface EmailSignupProps {
   /** Small heading above the form. Pass null to hide it. */
@@ -77,15 +74,8 @@ export function EmailSignup({
   if (status === 'success') {
     return (
       <div className={className} aria-live="polite">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Check className="h-3 w-3" />
-          </span>
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{successTitle}</p>
-            <p className="text-xs text-muted-foreground">{successMessage}</p>
-          </div>
-        </div>
+        <p style={{ fontWeight: 600 }}>{successTitle}</p>
+        <p>{successMessage}</p>
       </div>
     )
   }
@@ -93,17 +83,20 @@ export function EmailSignup({
   return (
     <div className={className}>
       {(heading || description) && (
-        <div className="mb-3 space-y-1">
-          {heading && <h2 className="text-sm font-semibold">{heading}</h2>}
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        <div style={{ marginBottom: '0.75rem' }}>
+          {heading && <h2 style={{ fontWeight: 600 }}>{heading}</h2>}
+          {description && <p>{description}</p>}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '20rem' }}
+      >
         <label htmlFor={inputId} className="sr-only">
           Email address
         </label>
-        <Input
+        <input
           id={inputId}
           type="email"
           inputMode="email"
@@ -117,15 +110,20 @@ export function EmailSignup({
           aria-invalid={!!error}
           disabled={status === 'loading'}
           required
+          style={{ padding: '0.5rem', border: '1px solid currentColor', borderRadius: '0.25rem' }}
         />
         {error && (
-          <p className="text-xs text-destructive" aria-live="polite">
+          <p role="alert" style={{ color: 'crimson' }}>
             {error}
           </p>
         )}
-        <Button type="submit" className="w-full" disabled={status === 'loading'}>
+        <button
+          type="submit"
+          disabled={status === 'loading'}
+          style={{ padding: '0.5rem', border: '1px solid currentColor', borderRadius: '0.25rem' }}
+        >
           {status === 'loading' ? loadingLabel : buttonLabel}
-        </Button>
+        </button>
       </form>
     </div>
   )

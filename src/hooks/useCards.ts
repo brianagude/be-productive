@@ -127,19 +127,6 @@ export function useCards() {
     return card.id
   }, [persist, persistActive])
 
-  /** One-shot import: append a new card seeded with the given task texts. */
-  const importTasks = useCallback(
-    (texts: string[]) => {
-      if (!texts.length) return
-      const card = newCard()
-      card.tasks = card.tasks.map((t, i) => (texts[i] ? { ...t, text: texts[i] } : t))
-      card.title = 'IMPORTED'
-      persist([...ref.current, card])
-      persistActive(card.id)
-    },
-    [persist, persistActive],
-  )
-
   /** Remove a card from the list. */
   const deleteCard = useCallback(
     (id: string) => {
@@ -158,6 +145,5 @@ export function useCards() {
     setCardMeta,
     addCard,
     deleteCard,
-    importTasks,
   }
 }

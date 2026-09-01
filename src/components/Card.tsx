@@ -1,16 +1,20 @@
 'use client'
 
 import Image from 'next/image'
-import { format } from 'date-fns'
 import { CardState } from '@/lib/types'
 import { TaskRow } from './TaskRow'
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 
 /** YYYY-MM-DD → "November, 29, 2026" (parsed as a local date, no TZ shift). */
 function formatCardDate(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
   if (!m) return ''
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  return Number.isNaN(d.getTime()) ? '' : format(d, 'MMMM, d, yyyy')
+  return Number.isNaN(d.getTime()) ? '' : `${MONTHS[d.getMonth()]}, ${d.getDate()}, ${d.getFullYear()}`
 }
 
 interface CardProps {

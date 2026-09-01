@@ -22,7 +22,7 @@ interface SideBarProps {
 }
 
 const rowCls =
-  "flex items-center gap-3 rounded px-2 py-3 text-base transition-colors active:bg-ink-95 disabled:cursor-not-allowed disabled:opacity-30";
+  "flex items-center gap-3 rounded px-2 py-3 text-base transition-colors active:bg-ink-95 disabled:default disabled:opacity-30";
 
 export function SideBar({ onOpenTimer }: SideBarProps) {
   const deck = useDeckControl();
@@ -38,9 +38,9 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
   }, []);
 
   const buttonStyles =
-    "group/button group-hover/sidebar:min-w-28 cursor-pointer disabled:cursor-not-allowed disabled:opacity-15 border-none bg-transperent outline-none flex items-center justify-end gap-2 transition-all";
+    "group/button group-hover/sidebar:min-w-28 cursor-pointer disabled:cursor-default! disabled:opacity-15 border-none bg-transperent outline-none flex items-center justify-end gap-2 transition-all";
   const spanStyles =
-    "hidden group-hover/sidebar:flex group-hover/button:font-semibold transition-all";
+    "opacity-0 group-hover/sidebar:opacity-100 transition-all";
 
   return (
     <>
@@ -68,26 +68,26 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
               <TrashIcon />
             </button>
             <button type="button" className={buttonStyles} onClick={deck.toggle} disabled={!deck.canToggle}>
-              <span className={spanStyles}>{deck.spread ? "Stack" : "Spread"}</span>
+              <span className={spanStyles}>Stack</span>
               <FanIcon spread={deck.spread} />
             </button>
           </div>
 
           <div className="flex flex-col gap-3">
             <button type="button" className={buttonStyles} onClick={onOpenTimer} disabled>
-              {/* <span className={spanStyles}>Timer</span> */}
+              <span className={spanStyles}>Timer</span>
               <TimerIcon />
             </button>
             <button type="button" className={buttonStyles} disabled>
-              {/* <span className={spanStyles}>Account</span> */}
+              <span className={spanStyles}>Account</span>
               <AccountIcon />
             </button>
             <button type="button" className={buttonStyles} disabled>
-              {/* <span className={spanStyles}>Theme</span> */}
+              <span className={spanStyles}>Theme</span>
               <PaintbrushIcon />
             </button>
             <button type="button" className={buttonStyles} disabled>
-              {/* <span className={spanStyles}>Help</span> */}
+              <span className={spanStyles}>Help</span>
               <HelpIcon />
             </button>
           </div>
@@ -102,7 +102,7 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
           aria-label="Open menu"
           className="flex items-center gap-2 text-sm font-semibold uppercase"
         >
-          Menu
+          <span className='sr-only'>Menu</span>
           <MenuIcon />
         </button>
       </div>
@@ -110,7 +110,7 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
       <Drawer.Root open={menuOpen} onOpenChange={setMenuOpen}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-1110 bg-ink-0/30 md:hidden" />
-          <Drawer.Content className="fixed inset-x-0 bottom-0 z-1110 rounded-t-xl border-t border-ink-90 bg-ink-100 p-4 pb-8 outline-none md:hidden">
+          <Drawer.Content className="fixed inset-x-0 bottom-0 z-1110 border-t border-ink-90 bg-ink-100 p-4 pb-8 outline-none md:hidden">
             <div className="mx-auto flex max-w-sm flex-col">
               <Drawer.Title className="px-2 pb-1 text-lg sr-only">Menu</Drawer.Title>
               <Drawer.Description className="sr-only">List controls and navigation</Drawer.Description>
@@ -164,7 +164,7 @@ export function SideBar({ onOpenTimer }: SideBarProps) {
                   }}
                 >
                   <FanIcon spread={deck.spread} />
-                  <span>{deck.spread ? "Stack" : "Spread"}</span>
+                  <span>Spread</span>
                 </button>
               </div>
 

@@ -29,6 +29,22 @@
   --color-ink-95: hsl(var(--gray-h) var(--gray-s) 95%);
   --color-ink-100: hsl(var(--gray-h) var(--gray-s) 100%); /* White */
 
+  --color-pink: hsl(var(--pink-h) var(--pink-s) 70%);
+  --color-pink-med: hsl(var(--pink-h) var(--pink-s) 80%);
+  --color-pink-light: hsl(var(--pink-h) var(--pink-s) 90%);
+
+  --color-custard: hsl(var(--custard-h) var(--custard-s) 60%);
+  --color-custard-med: hsl(var(--custard-h) var(--custard-s) 70%);
+  --color-custard-light: hsl(var(--custard-h) var(--custard-s) 86%);
+
+  --color-moss: hsl(var(--moss-h) var(--moss-s) 65%);
+  --color-moss-med: hsl(var(--moss-h) var(--moss-s) 75%);
+  --color-moss-light: hsl(var(--moss-h) var(--moss-s) 80%);
+
+  --color-lilac: hsl(var(--lilac-h) var(--lilac-s) 60%);
+  --color-lilac-med: hsl(var(--lilac-h) var(--lilac-s) 72%);
+  --color-lilac-light: hsl(var(--lilac-h) var(--lilac-s) 80%);
+/* 
   --color-pink: hsl(var(--pink-h) var(--pink-s) 74%);
   --color-pink-med: hsl(var(--pink-h) var(--pink-s) 82%);
   --color-pink-light: hsl(var(--pink-h) var(--pink-s) 90%);
@@ -43,7 +59,7 @@
 
   --color-lilac: hsl(var(--lilac-h) var(--lilac-s) 64%);
   --color-lilac-med: hsl(var(--lilac-h) var(--lilac-s) 72%);
-  --color-lilac-light: hsl(var(--lilac-h) var(--lilac-s) 80%);
+  --color-lilac-light: hsl(var(--lilac-h) var(--lilac-s) 80%); */
 
   --color-icon-fill: var(--color-ink-90);
   --color-icon-stroke: var(--color-ink-10);
@@ -63,21 +79,3 @@ body {
   line-height: 150%;
   color: var(--color-ink-0);
 }
-
-/* the dot inside the Spread/Stack icon slides when the button is toggled */
-.icon-toggle-dot {
-  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@media (prefers-reduced-motion: reduce) {
-  .icon-toggle-dot {
-    transition: none;
-  }
-}
-
-/* .overlay {
-  background-image: url('/overlay.png');
-  background-repeat: repeat;
-  background-position: 0 0;
-} */
-
-
