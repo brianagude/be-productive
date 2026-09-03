@@ -4,6 +4,32 @@ import Image from 'next/image'
 import { CardState } from '@/lib/types'
 import { TaskRow } from './TaskRow'
 
+function ordinal(n: number): string {
+  const rem100 = n % 100
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`
+  switch (n % 10) {
+    case 1:
+      return `${n}st`
+    case 2:
+      return `${n}nd`
+    case 3:
+      return `${n}rd`
+    default:
+      return `${n}th`
+  }
+}
+
+/** "2026-08-25" → "Monday, August 25th". Year is appended only when it isn't the current year. */
+function formatCardDate(value: string): string {
+  const [y, m, d] = value.split('-').map(Number)
+  if (!y || !m || !d) return ''
+  const date = new Date(y, m - 1, d)
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
+  const month = date.toLocaleDateString('en-US', { month: 'long' })
+  const base = `${weekday}, ${month} ${ordinal(d)}`
+  return y === new Date().getFullYear() ? base : `${base}, ${y}`
+}
+
 interface CardProps {
   card: CardState
   onMeta: (patch: { title?: string; description?: string; date?: string }) => void
@@ -41,14 +67,18 @@ export function Card({ card, onMeta, onText, onToggleDone, onToggleImportant }: 
           <label className="text-[10px] font-semibold uppercase" htmlFor={`date-${card.id}`}>
             Date
           </label>
-          <input
-            id={`date-${card.id}`}
-            type="date"
-            value={card.date}
-            onChange={e => e.target.value && onMeta({ date: e.target.value })}
-            aria-label="Card date"
-            className="outline-none bg-transparent cursor-pointer"
-          />
+          <div className="relative">
+            <span className="block">{formatCardDate(card.date)}</span>
+            <input
+              id={`date-${card.id}`}
+              type="date"
+              value={card.date}
+              onChange={e => e.target.value && onMeta({ date: e.target.value })}
+              onClick={e => e.currentTarget.showPicker?.()}
+              aria-label="Card date"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </div>
         </div>
       </div>
 
